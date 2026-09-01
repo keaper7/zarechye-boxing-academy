@@ -4,6 +4,10 @@ import { content } from '@/content'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 export const alt = content.meta.ogAlt
+// Статический экспорт рендерит эту картинку один раз при сборке и кладёт
+// готовый PNG в out/ — без этой пометки next build отказывается собирать
+// маршрут, не зная, что он не должен обслуживаться заново на каждый запрос.
+export const dynamic = 'force-static'
 
 /**
  * Картинка для соцсетей. Фотографий нет, поэтому она чисто типографическая —
