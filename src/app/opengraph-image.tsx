@@ -30,8 +30,11 @@ export default function OpengraphImage() {
           padding: 72,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', width: 8, height: 56, background: '#e8452e' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {/* Тот же знак, что и в фавиконе (src/app/icon.svg) */}
+          <svg width="60" height="60" viewBox="0 0 64 64" fill="#e8452e">
+            <path d="M22 6 H42 C51 6 58 13 58 22 V34 C58 41 53 46 46 46 V56 C46 59 44 61 40 61 H28 C24 61 22 59 22 56 V46 C21 44 20 42 20 40 C16 41 11 40 8 37 C5 34 5 28 8 26 C10 24 12 23 14 23 C16 22 18 21 20 19 V12 C20 8 20 6 22 6 Z" />
+          </svg>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', height: 2, width: 240, background: 'rgba(242,239,233,0.28)' }} />
             <div style={{ display: 'flex', height: 2, width: 240, background: 'rgba(242,239,233,0.28)' }} />

@@ -17,10 +17,16 @@ import type { NextConfig } from 'next'
  */
 const REPO = 'zarechye-boxing-academy'
 
+// Префикс нужен только собранному сайту. В dev-режиме он лишь загонял бы
+// локальную разработку на localhost:3000/zarechye-boxing-academy/, где
+// корень отдаёт 404 — при том что проверять правильность путей всё равно
+// нужно на продакшн-сборке, а не в dev.
+const basePath = process.env.NODE_ENV === 'production' ? `/${REPO}` : ''
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'export',
-  basePath: `/${REPO}`,
+  basePath,
   // trailingSlash: страница «/coach» экспортируется как coach/index.html,
   // а не coach.html. GitHub Pages отдаёт index.html по обращению к папке
   // без явного файла — без этого флага прямые заходы на подстраницы
