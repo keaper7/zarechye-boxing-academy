@@ -11,16 +11,22 @@ import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion'
  * получает удар по клику, делает то, что должна делать первая секция
  * сайта спортзала, — вовлекает физически.
  *
- * Физика — маятник с затуханием: θ'' = −(g / L)·sin θ − k·θ'.
- * Плюс отдельная пружина на деформацию: удар сминает мешок поперёк
- * и она затухает колебанием, а не линейно.
+ * ФИЗИКА. Не маятник с одним углом, а верёвка Верле: цепочка узлов,
+ * связанных ограничениями на расстояние. Один угол не позволял цепи
+ * ни прогнуться, ни отыграть удар — она была жёсткой палкой, которая
+ * просто поворачивалась вместе с мешком. Здесь удар прилетает в узел
+ * мешка, а дальше сам расходится вверх по звеньям волной: именно это
+ * и видно на записях из зала.
  *
- * СИСТЕМА КООРДИНАТ. Всё, что относится к мешку, живёт в локальном
- * кадре с началом в подвесе и осью Y вниз; в мир его переводит
- * ctx.rotate(θ), то есть матрица [cos −sin; sin cos]. Значит точка
- * (0, L) под подвесом уезжает в (−L·sin θ, L·cos θ): при росте θ
- * мешок идёт ВЛЕВО. Знак существенный — на нём висят и тень на полу,
- * и попадание клика, и направление отталкивания курсором.
+ * Узлы: 0 — подвес (прибит намертво), 1..lastChain — звенья цепи,
+ * последний узел — центр мешка. Отрезок lastChain → центр задаёт ось
+ * мешка, поэтому его наклон и есть угол мешка; отдельного θ в системе
+ * нет, он вычисляется из узлов.
+ *
+ * СИСТЕМА КООРДИНАТ МЕШКА. Начало — в нижнем узле цепи (карабин),
+ * ось Y вниз вдоль мешка. Переводит в мир ctx.rotate(θ), матрица
+ * [cos −sin; sin cos]: точка (0, L) уезжает в (−L·sin θ, L·cos θ).
+ * Знак существенный — на нём висят и попадание клика, и импакты.
  *
  * Цвета продублированы из globals.css намеренно: тянуть их из
  * getComputedStyle на каждый кадр дорого, а один раз — хрупко
@@ -29,17 +35,33 @@ import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion'
 
 const INK = '#0a0a0b'
 
+// Шаг физики фиксирован: Верле на переменном dt разъезжается — при
+// просадке кадров цепь то провисает, то дёргается. Кадр «догоняет»
+// накопленным временем, а не растягивает один большой шаг.
+const STEP = 1 / 120
+const GRAVITY = 1400
+// 0.9965 за шаг ≈ e^(−0.42·t) за секунду — то же затухание, что было
+// у прежнего маятника: тяжёлый мешок качается долго.
+const DRAG = 0.9965
+const ITERATIONS = 6
+
+type Node = { x: number; y: number; px: number; py: number; ax: number; ay: number; inv: number }
+
 type Scene = {
   pivotX: number
   pivotY: number
   chain: number
+  segLen: number
+  lastChain: number
+  linkR: number
   bagW: number
   bagH: number
-  bagTop: number
-  bagBot: number
+  /** Зазор от нижнего узла цепи до верхней кромки мешка (карабин) */
+  gap: number
   capRy: number
   armLen: number
   floorY: number
+  maxSwing: number
 }
 
 /** Удар хранится в локальном кадре мешка — иначе круг остаётся висеть
@@ -74,18 +96,19 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     let S: Scene | null = null
     let bodyGrad: CanvasGradient | null = null
 
-    // Конус света и виньетка не зависят ни от θ, ни от времени — только
-    // от размера холста. Раскатывать два полноэкранных радиальных
-    // градиента каждый кадр значит переписывать ~15 млн пикселей
-    // на 60 Гц; запекаем их один раз и дальше только копируем.
+    // Конус света и виньетка не зависят ни от узлов, ни от времени —
+    // только от размера холста. Раскатывать два полноэкранных
+    // радиальных градиента каждый кадр значит переписывать ~15 млн
+    // пикселей на 60 Гц; запекаем их один раз и дальше только копируем.
     const lightLayer = document.createElement('canvas')
     const vignetteLayer = document.createElement('canvas')
 
-    let theta = 0.14
-    let omega = 0
+    let nodes: Node[] = []
+    let rests: number[] = []
     let squash = 0
     let squashV = 0
     let time = 0
+    let acc = 0
 
     let visible = true
     let hovering = false
@@ -96,6 +119,56 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     const impacts: Impact[] = []
     const sparks: Spark[] = []
     const motes: Mote[] = []
+
+    const bakeLayer = (layer: HTMLCanvasElement, paint: (c: CanvasRenderingContext2D) => void) => {
+      layer.width = Math.round(w * dpr)
+      layer.height = Math.round(h * dpr)
+      const c = layer.getContext('2d')
+      if (!c) return
+      c.setTransform(dpr, 0, 0, dpr, 0, 0)
+      c.clearRect(0, 0, w, h)
+      paint(c)
+    }
+
+    /** Раскладывает верёвку прямой линией с небольшим наклоном — это и
+     *  стартовая поза, и статичный кадр для prefers-reduced-motion. */
+    const rest = (s: Scene, tilt: number) => {
+      const dirX = -Math.sin(tilt)
+      const dirY = Math.cos(tilt)
+      nodes = []
+      rests = []
+
+      for (let i = 0; i <= s.lastChain; i++) {
+        const d = s.segLen * i
+        nodes.push({
+          x: s.pivotX + dirX * d,
+          y: s.pivotY + dirY * d,
+          px: s.pivotX + dirX * d,
+          py: s.pivotY + dirY * d,
+          ax: 0,
+          ay: 0,
+          // Звенья лёгкие, мешок тяжёлый: ограничения двигают в основном
+          // цепь, а не мешок. Иначе цепь тащила бы мешок за собой и он
+          // болтался бы как воздушный шарик.
+          inv: 1,
+        })
+        if (i > 0) rests.push(s.segLen)
+      }
+
+      const bagDist = s.segLen * s.lastChain + s.gap + s.bagH / 2
+      nodes.push({
+        x: s.pivotX + dirX * bagDist,
+        y: s.pivotY + dirY * bagDist,
+        px: s.pivotX + dirX * bagDist,
+        py: s.pivotY + dirY * bagDist,
+        ax: 0,
+        ay: 0,
+        inv: 0.12,
+      })
+      rests.push(s.gap + s.bagH / 2)
+
+      nodes[0].inv = 0
+    }
 
     const build = () => {
       const rect = canvas.getBoundingClientRect()
@@ -111,20 +184,29 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       const bagH = Math.min(h * (narrow ? 0.46 : 0.52), 480)
       const bagW = bagH * 0.3
       const chain = h * (narrow ? 0.2 : 0.24)
-      const bagTop = chain + Math.max(12, bagW * 0.18)
+      const gap = Math.max(12, bagW * 0.18)
+      // Одно звено на отрезок: ~22px даёт цепь, которая и читается
+      // звеньями, и гнётся достаточно плавно
+      const links = Math.max(5, Math.round(chain / 22))
 
       S = {
         pivotX: narrow ? w * 0.62 : w * 0.76,
         pivotY: -h * 0.03,
         chain,
+        segLen: chain / links,
+        lastChain: links,
+        linkR: Math.max(2.5, bagW * 0.05),
         bagW,
         bagH,
-        bagTop,
-        bagBot: bagTop + bagH,
+        gap,
         capRy: bagW * 0.13,
-        armLen: bagTop + bagH / 2,
+        armLen: chain + gap + bagH / 2,
         floorY: h * 0.95,
+        // Мешок на цепи не должен раскачиваться как качели на площадке
+        maxSwing: (chain + gap + bagH / 2) * Math.sin(0.5),
       }
+
+      rest(S, reduced ? 0.07 : 0.12)
 
       // Цилиндрическая раскладка света: блик слева сверху, широкая
       // тень справа и слабый отсвет по правой кромке. Без него мешок
@@ -175,67 +257,116 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       }
     }
 
-    const bakeLayer = (layer: HTMLCanvasElement, paint: (c: CanvasRenderingContext2D) => void) => {
-      layer.width = Math.round(w * dpr)
-      layer.height = Math.round(h * dpr)
-      const c = layer.getContext('2d')
-      if (!c) return
-      c.setTransform(dpr, 0, 0, dpr, 0, 0)
-      c.clearRect(0, 0, w, h)
-      paint(c)
-    }
+    /** Нижний узел цепи — точка подвеса мешка и начало его кадра. */
+    const hook = (s: Scene) => nodes[s.lastChain]
+    const bagCenter = () => nodes[nodes.length - 1]
 
-    /** Центр мешка в экранных координатах. Знак минус — см. шапку файла. */
-    const bagCenter = (s: Scene) => ({
-      x: s.pivotX - Math.sin(theta) * s.armLen,
-      y: s.pivotY + Math.cos(theta) * s.armLen,
-    })
+    /** Угол мешка выводится из отрезка «карабин → центр», а не хранится
+     *  отдельно: иначе он рассинхронизировался бы с верёвкой. */
+    const bagAngle = (s: Scene) => {
+      const a = hook(s)
+      const b = bagCenter()
+      return Math.atan2(-(b.x - a.x), b.y - a.y)
+    }
 
     /** Экранная точка → локальный кадр мешка (поворот на −θ). */
     const toLocal = (s: Scene, px: number, py: number) => {
-      const dx = px - s.pivotX
-      const dy = py - s.pivotY
-      const c = Math.cos(theta)
-      const sn = Math.sin(theta)
+      const a = hook(s)
+      const th = bagAngle(s)
+      const dx = px - a.x
+      const dy = py - a.y
+      const c = Math.cos(th)
+      const sn = Math.sin(th)
       return { lx: dx * c + dy * sn, ly: -dx * sn + dy * c }
     }
 
     const isOnBag = (s: Scene, px: number, py: number) => {
       const { lx, ly } = toLocal(s, px, py)
       const pad = 10
-      return Math.abs(lx) <= s.bagW / 2 + pad && ly >= s.bagTop - pad && ly <= s.bagBot + pad
+      return Math.abs(lx) <= s.bagW / 2 + pad && ly >= s.gap - pad && ly <= s.gap + s.bagH + pad
     }
 
-    const step = (s: Scene, dt: number) => {
-      time += dt
+    /** Добавляет узлу скорость в px/с. В Верле скорость — это разница
+     *  между текущей и прошлой позицией, поэтому импульс задаётся
+     *  сдвигом прошлой позиции назад. */
+    const push = (n: Node, vx: number, vy: number) => {
+      n.px -= vx * STEP
+      n.py -= vy * STEP
+    }
 
-      // Затухание намеренно слабое: тяжёлый мешок качается долго,
-      // при k≈0.9 он замирал за пару секунд и сцена мертвела.
-      const g = 1400
-      omega += (-(g / s.armLen) * Math.sin(theta) - 0.42 * omega) * dt
+    const integrate = () => {
+      for (let i = 1; i < nodes.length; i++) {
+        const n = nodes[i]
+        const vx = (n.x - n.px) * DRAG
+        const vy = (n.y - n.py) * DRAG
+        n.px = n.x
+        n.py = n.y
+        n.x += vx + n.ax * STEP * STEP
+        n.y += vy + (GRAVITY + n.ay) * STEP * STEP
+        n.ax = 0
+        n.ay = 0
+      }
+    }
 
-      // Курсор рядом отталкивает мешок ОТ себя. Курсор слева (dx>0)
-      // должен двинуть мешок вправо, то есть уменьшить θ.
+    const solve = (s: Scene) => {
+      for (let it = 0; it < ITERATIONS; it++) {
+        for (let i = 0; i < nodes.length - 1; i++) {
+          const a = nodes[i]
+          const b = nodes[i + 1]
+          const wsum = a.inv + b.inv
+          if (wsum === 0) continue
+          const dx = b.x - a.x
+          const dy = b.y - a.y
+          const d = Math.hypot(dx, dy) || 1e-6
+          const diff = (d - rests[i]) / d
+          a.x += dx * diff * (a.inv / wsum)
+          a.y += dy * diff * (a.inv / wsum)
+          b.x -= dx * diff * (b.inv / wsum)
+          b.y -= dy * diff * (b.inv / wsum)
+        }
+      }
+
+      // Подвес прибит намертво — накопленный дрейф ему не положен
+      nodes[0].x = s.pivotX
+      nodes[0].y = s.pivotY
+
+      // Мягкий предел раскачки: дальше мешок не уходит, а остаток
+      // скорости гасится, будто цепь дошла до упора
+      const bag = bagCenter()
+      const off = bag.x - s.pivotX
+      if (Math.abs(off) > s.maxSwing) {
+        bag.x = s.pivotX + Math.sign(off) * s.maxSwing
+        bag.px = bag.x + (bag.px - bag.x) * 0.35
+      }
+    }
+
+    const physics = (s: Scene) => {
+      // Курсор рядом отталкивает мешок ОТ себя
       if (pointer.active) {
-        const b = bagCenter(s)
+        const b = bagCenter()
         const dx = b.x - pointer.x
         const dy = b.y - pointer.y
         const dist = Math.hypot(dx, dy)
         const reach = s.bagW * 3
         if (dist < reach && dist > 0.1) {
-          const push = (1 - dist / reach) * 1.1
-          omega -= Math.sign(dx) * push * dt
+          b.ax += Math.sign(dx) * (1 - dist / reach) * 620
         }
       }
 
-      theta += omega * dt
-      // Мешок на цепи не должен раскачиваться как качели на площадке
-      if (theta > 0.46) {
-        theta = 0.46
-        omega = -Math.abs(omega) * 0.4
-      } else if (theta < -0.46) {
-        theta = -0.46
-        omega = Math.abs(omega) * 0.4
+      integrate()
+      solve(s)
+    }
+
+    const step = (s: Scene, dt: number) => {
+      time += dt
+
+      acc += dt
+      // Потолок на случай, если вкладка была свёрнута: иначе накопится
+      // минута времени и физика провернётся тысячами шагов за кадр
+      if (acc > 0.25) acc = 0.25
+      while (acc >= STEP) {
+        physics(s)
+        acc -= STEP
       }
 
       // Пружина деформации: сминание отыгрывает колебанием и затухает
@@ -272,10 +403,11 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     /** Слабое мерцание лампы — сцена не выглядит замороженной, даже
      *  когда мешок уже остановился. Только приглушает: слой запечён
      *  на полной яркости, а globalAlpha выше единицы не поднимается. */
-    const flicker = () => 1 - 0.028 * (0.5 + 0.5 * Math.sin(time * 2.1)) - 0.016 * (0.5 + 0.5 * Math.sin(time * 5.7 + 1.3))
+    const flicker = () =>
+      1 - 0.028 * (0.5 + 0.5 * Math.sin(time * 2.1)) - 0.016 * (0.5 + 0.5 * Math.sin(time * 5.7 + 1.3))
 
     const drawRoom = (s: Scene) => {
-      const b = bagCenter(s)
+      const b = bagCenter()
       const f = flicker()
 
       // Конус света от лампы: запечённый слой, мерцание — через альфу
@@ -295,7 +427,7 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
 
       // Тень мешка внутри пятна: едет вместе с мешком и растягивается
       // тем сильнее, чем дальше он отклонился от лампы
-      const spread = 1 + Math.abs(theta) * 0.9
+      const spread = 1 + Math.abs(bagAngle(s)) * 0.9
       const shadow = ctx.createRadialGradient(b.x, s.floorY, 0, b.x, s.floorY, s.bagW * 1.5 * spread)
       shadow.addColorStop(0, 'rgba(10,10,11,0.72)')
       shadow.addColorStop(1, 'rgba(10,10,11,0)')
@@ -319,17 +451,50 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       }
     }
 
+    /** Цепь рисуется по реальным узлам, в мировых координатах: каждое
+     *  звено садится на свой отрезок и наклоняется вместе с ним, так
+     *  что прогиб и волна от удара видны сами собой. */
+    const drawChain = (s: Scene) => {
+      ctx.lineWidth = Math.max(1.1, s.bagW * 0.016)
+      for (let i = 0; i < s.lastChain; i++) {
+        const a = nodes[i]
+        const b = nodes[i + 1]
+        const dx = b.x - a.x
+        const dy = b.y - a.y
+        const len = Math.hypot(dx, dy) || 1e-6
+        const side = i % 2 === 0
+        ctx.strokeStyle = side ? 'rgba(242,239,233,0.24)' : 'rgba(242,239,233,0.13)'
+        ctx.beginPath()
+        ctx.ellipse(
+          (a.x + b.x) / 2,
+          (a.y + b.y) / 2,
+          len * 0.62,
+          side ? s.linkR : s.linkR * 0.42,
+          Math.atan2(dy, dx),
+          0,
+          Math.PI * 2,
+        )
+        ctx.stroke()
+      }
+    }
+
     const drawBag = (s: Scene) => {
       const bw = s.bagW
-      const top = s.bagTop
-      const bot = s.bagBot
+      const top = s.gap
+      const bot = s.gap + s.bagH
       const cap = s.capRy
+      const a = hook(s)
 
       ctx.save()
-      ctx.translate(s.pivotX, s.pivotY)
-      ctx.rotate(theta)
+      ctx.translate(a.x, a.y)
+      ctx.rotate(bagAngle(s))
 
-      drawChain(s)
+      // Карабин
+      ctx.strokeStyle = 'rgba(242,239,233,0.28)'
+      ctx.lineWidth = Math.max(1.6, bw * 0.024)
+      ctx.beginPath()
+      ctx.arc(0, s.linkR * 1.4, s.linkR * 1.5, Math.PI * 0.16, Math.PI * 0.84, true)
+      ctx.stroke()
 
       // Удар сминает мешок поперёк и слегка раздувает вдоль —
       // сжатие по одной оси без прибавки по другой читается как
@@ -442,32 +607,6 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       ctx.restore()
     }
 
-    /** Цепь звеньями, а не одной линией: на светлом фоне лампы
-     *  прямая двухпиксельная палка сразу выдаёт схематичность. */
-    const drawChain = (s: Scene) => {
-      const links = Math.max(5, Math.round(s.chain / 22))
-      const stepY = s.chain / links
-      const rx = Math.max(2.5, s.bagW * 0.05)
-      const ry = stepY * 0.62
-
-      for (let i = 0; i < links; i++) {
-        const cy = stepY * (i + 0.5)
-        const side = i % 2 === 0
-        ctx.strokeStyle = side ? 'rgba(242,239,233,0.24)' : 'rgba(242,239,233,0.13)'
-        ctx.lineWidth = Math.max(1.1, s.bagW * 0.016)
-        ctx.beginPath()
-        ctx.ellipse(0, cy, side ? rx : rx * 0.42, ry, 0, 0, Math.PI * 2)
-        ctx.stroke()
-      }
-
-      // Карабин
-      ctx.strokeStyle = 'rgba(242,239,233,0.28)'
-      ctx.lineWidth = Math.max(1.6, s.bagW * 0.024)
-      ctx.beginPath()
-      ctx.arc(0, s.chain + rx * 1.4, rx * 1.5, Math.PI * 0.16, Math.PI * 0.84, true)
-      ctx.stroke()
-    }
-
     /** Рисуется внутри локального кадра мешка — вместе с ним и едет. */
     const drawImpacts = () => {
       for (const im of impacts) {
@@ -512,18 +651,15 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       }
     }
 
-    const drawVignette = () => {
-      ctx.drawImage(vignetteLayer, 0, 0, w, h)
-    }
-
     const render = (s: Scene) => {
       ctx.fillStyle = INK
       ctx.fillRect(0, 0, w, h)
       drawRoom(s)
       drawMotes(s)
+      drawChain(s)
       drawBag(s)
       drawSparks()
-      drawVignette()
+      ctx.drawImage(vignetteLayer, 0, 0, w, h)
     }
 
     const frame = (now: number) => {
@@ -543,20 +679,30 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
       if (!s || !isOnBag(s, px, py)) return
 
       const { lx, ly } = toLocal(s, px, py)
-      const b = bagCenter(s)
+      const bag = bagCenter()
 
-      // Удар слева (px < b.x) должен толкнуть мешок вправо, а вправо —
-      // это уменьшение θ. Значит знак импульса совпадает со знаком
-      // (px − центр): слева получаем −1 и θ падает. Ровно по центру
+      // Удар слева должен толкнуть мешок вправо. Ровно по центру
       // считаем удар пришедшим слева, иначе мешок замер бы на месте.
-      const side = px < b.x ? -1 : 1
-      omega += side * 1.6
+      const side = px < bag.x ? 1 : -1
+      push(bag, side * 430, 0)
+
+      // Нижним звеньям добавлен собственный небольшой импульс,
+      // затухающий вверх. Чистого протаскивания мешком мало: волна
+      // получается вялой и на тёмном фоне почти не читается — это
+      // осознанное усиление эффекта, а не физика.
+      for (let i = s.lastChain; i > 0; i--) {
+        const up = s.lastChain - i
+        const k = Math.exp(-up * 0.55)
+        if (k < 0.03) break
+        push(nodes[i], side * 430 * 0.45 * k, 0)
+      }
+
       squashV += 26
       punchRef.current?.()
 
       impacts.push({
         lx: Math.max(-s.bagW / 2, Math.min(s.bagW / 2, lx)),
-        ly: Math.max(s.bagTop, Math.min(s.bagBot, ly)),
+        ly: Math.max(s.gap, Math.min(s.gap + s.bagH, ly)),
         t: 0,
       })
 
@@ -615,7 +761,10 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     const io = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting
-        if (visible) last = performance.now()
+        if (visible) {
+          last = performance.now()
+          acc = 0
+        }
       },
       { threshold: 0 },
     )
@@ -625,7 +774,6 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
 
     if (reduced) {
       // Один статичный кадр: сцена остаётся, движение — нет
-      theta = 0.07
       if (S) render(S)
       return () => {
         ro.disconnect()

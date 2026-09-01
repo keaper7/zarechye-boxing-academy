@@ -6,8 +6,32 @@ Tailwind v4 + Motion + Lenis.
 ```bash
 npm install
 npm run dev     # http://localhost:3000
-npm run build
+npm run build   # статический сайт в out/
 ```
+
+## Публикация
+
+Сайт живёт на GitHub Pages: **https://keaper7.github.io/zarechye-boxing-academy/**
+
+Публикуется сам: любой пуш в `main` запускает
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), который
+собирает проект и выкладывает папку `out/`. Ничего собирать и коммитить
+руками не нужно — только `git push`.
+
+Разово в настройках репозитория должно быть выставлено
+**Settings → Pages → Source: GitHub Actions**.
+
+Почему статический экспорт (`output: 'export'` в `next.config.ts`):
+GitHub Pages не запускает Next.js, он отдаёт готовые файлы. Отсюда же
+`basePath` — сайт лежит не в корне домена, а в подпути с именем
+репозитория. В dev-режиме `basePath` отключён, поэтому локально всё
+по-прежнему на `localhost:3000` без подпути.
+
+### Свой домен
+
+Когда у клиента появится домен: заменить `SITE_URL` в `src/content.ts`,
+убрать `basePath` из `next.config.ts` и добавить домен в
+Settings → Pages → Custom domain.
 
 ## Где что менять
 
