@@ -1,0 +1,256 @@
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────
+   Токены. Тёмная база — «зал до того, как включили свет над рингом».
+   Акцент --signal тратится скупо: только на действие и на цифры,
+   иначе красный перестаёт что-либо значить.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-ink: #0a0a0b;
+  --color-ink-2: #131316;
+  --color-ink-3: #1c1c20;
+  --color-bone: #f2efe9;
+  --color-signal: #e8452e;
+
+  --font-display: var(--font-oswald), 'Oswald', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-ui), ui-monospace, 'SFMono-Regular', monospace;
+}
+
+:root {
+  /* Прозрачности подобраны по контрасту к --color-ink, а не на глаз:
+     0.70 даёт 9.2:1, 0.50 — 4.9:1. Более тёмные значения выглядели
+     атмосфернее, но проваливали WCAG AA для обычного текста (4.5:1). */
+  --dim: rgba(242, 239, 233, 0.7);
+  --dim-2: rgba(242, 239, 233, 0.5);
+  --hair: rgba(242, 239, 233, 0.12);
+  --hair-strong: rgba(242, 239, 233, 0.22);
+
+  /* Одна кривая на весь сайт: движение должно читаться как одна система */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --pad: clamp(20px, 5vw, 88px);
+  --micro: clamp(10px, 0.74vw, 12px);
+  --gutter: clamp(32px, 6vw, 96px);
+}
+
+/* ── База ─────────────────────────────────────────────────── */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--color-ink);
+  /* Плавный скролл ведёт Lenis; нативный smooth с ним конфликтует */
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.55;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Пока идёт прелоадер — страница под шторкой не должна скроллиться */
+body[data-locked='true'] {
+  overflow: hidden;
+}
+
+/* ── Типографика ──────────────────────────────────────────── */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 0.86;
+  letter-spacing: -0.012em;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.h-section {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  /* 0.92 резало верхушки «Й» и «Ё» на двустрочных заголовках — с их
+     диакритикой нужен запас, которого плотный display-lh не даёт. */
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  font-size: clamp(38px, 6.6vw, 104px);
+  text-wrap: balance;
+}
+
+
+.lead {
+  font-size: clamp(17px, 1.55vw, 23px);
+  line-height: 1.45;
+}
+
+.body-text {
+  font-size: clamp(15px, 1.05vw, 17px);
+  line-height: 1.62;
+  color: var(--dim);
+}
+
+/* ── Раскладка ────────────────────────────────────────────── */
+.shell {
+  padding-inline: var(--pad);
+  margin-inline: auto;
+  max-width: 1680px;
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(88px, 12vh, 180px);
+}
+
+.hair {
+  border: 0;
+  border-top: 1px solid var(--hair);
+}
+
+/* ── Зерно и свет ─────────────────────────────────────────────
+   Плёночное зерно поверх всего: убирает «цифровую стерильность»
+   плоских тёмных заливок. Не перехватывает события мыши.
+   ───────────────────────────────────────────────────────────── */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Вход первого экрана ──────────────────────────────────────
+   Герой анимируется средствами CSS, а не motion. Motion пишет
+   `opacity: 0` прямо в серверную разметку — до гидратации первый
+   экран был бы пустым, а это и LCP, и главный текст страницы.
+   CSS-анимация стартует сразу с первой отрисовкой и не зависит от JS.
+   Задержка задаётся переменной --d на самом элементе.
+   ───────────────────────────────────────────────────────────── */
+@keyframes rise-in {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hint-line {
+  0%,
+  100% {
+    transform: scaleX(0.2);
+  }
+  50% {
+    transform: scaleX(1);
+  }
+}
+
+.rise-line {
+  display: block;
+  animation: rise-in 1.05s var(--ease) both;
+  animation-delay: var(--d, 0s);
+}
+
+.fade-up {
+  animation: fade-up 0.9s var(--ease) both;
+  animation-delay: var(--d, 0s);
+}
+
+.hint-line {
+  transform-origin: left;
+  animation: hint-line 2.4s ease-in-out infinite;
+}
+
+/* Если скрипты отключены, motion не снимет свои стартовые стили —
+   и половина страницы останется невидимой. Проверяем это медиафичей,
+   а не классом от инлайн-скрипта: класс на <html> расходится с
+   серверной разметкой и ломает гидратацию. */
+@media (scripting: none) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Ссылки с подчёркиванием, которое приезжает слева ─────── */
+.link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s var(--ease);
+}
+
+.link-underline:hover::after,
+.link-underline:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ── Уважение к prefers-reduced-motion ───────────────────────
+   Здесь глушится всё CSS-движение; JS-часть (Lenis, canvas,
+   marquee, параллакс) отключается отдельно через usePrefersReducedMotion.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    /* Задержку тоже надо обнулить: с animation-fill-mode: both элемент
+       держит стартовое состояние всю задержку — при мгновенной анимации
+       первый экран просто пропал бы на секунду. */
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
