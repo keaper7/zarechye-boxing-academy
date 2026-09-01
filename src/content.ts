@@ -15,7 +15,10 @@
  *   instagram.com/aydamir_tlinov — МС России, финалист ЧР-2018, pro record 1:0, Threads.
  */
 
-export const SITE_URL = 'https://zarechye-boxing.ru' // TODO: подставить реальный домен
+// Адрес GitHub Pages: username.github.io/репозиторий — не в корне домена.
+// Купите домен на клиента — замените на него, заодно уберите basePath
+// в next.config.ts (он там ровно из-за этого подпути).
+export const SITE_URL = 'https://keaper7.github.io/zarechye-boxing-academy'
 
 export const content = {
   brand: {

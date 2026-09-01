@@ -49,6 +49,10 @@ export const metadata: Metadata = {
     description: content.meta.description,
   },
   robots: { index: true, follow: true },
+  // apple-touch-icon прописан вручную в <head> ниже, а не здесь: любое
+  // явное поле `icons` в metadata подменяет собой ВСЮ автосгенерированную
+  // коллекцию иконок — пропадает и он, и обычный favicon (icon.svg).
+  // См. комментарий у тега в <head>.
 }
 
 export const viewport: Viewport = {
@@ -68,6 +72,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `if('scrollRestoration' in history) history.scrollRestoration='manual'`,
           }}
         />
+        {/* Картинку рендерит src/app/apple-touch-icon/route.tsx — обычный
+            route handler, а не файл-конвенция: та бы сама сгенерировала
+            этот тег, но на статическом экспорте с basePath теряла префикс
+            подпути. Абсолютный URL через SITE_URL исключает проблему. */}
+        <link rel="apple-touch-icon" href={`${SITE_URL}/apple-touch-icon`} />
       </head>
       <body>
         <Preloader />
