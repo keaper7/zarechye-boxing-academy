@@ -20,6 +20,17 @@
 // в next.config.ts (он там ровно из-за этого подпути).
 export const SITE_URL = 'https://keaper7.github.io/zarechye-boxing-academy'
 
+/**
+ * Профили, на которые ссылается не только список контактов, но и кнопки
+ * в шапке, в герое и в блоке тренера. Вынесены в константы намеренно:
+ * раньше эти кнопки лезли в массив по индексу (`links[0]`, `links[2]`),
+ * и стоило поменять порядок ссылок ниже — кнопка «Записаться» молча
+ * начинала вести не туда. Здесь адрес один, и меняется он в одном месте.
+ */
+const IG_GYM = 'https://www.instagram.com/zarechye_boxing_academy/'
+const IG_COACH = 'https://www.instagram.com/aydamir_tlinov/'
+const THREADS_COACH = 'https://www.threads.com/@aydamir_tlinov'
+
 export const content = {
   brand: {
     /** VERIFIED: ник аккаунта zarechye_boxing_academy */
@@ -28,6 +39,10 @@ export const content = {
     nameRu: 'Академия бокса «Заречье»',
     /** VERIFIED: био — «Тренер по боксу | Заречье» */
     area: 'Заречье',
+    /** Подпись под иконкой на домашнем экране Android (manifest.short_name).
+     *  Длиннее ~12 символов система обрезает многоточием, поэтому здесь
+     *  короткая форма, а не полное название. */
+    shortName: 'Бокс Заречье',
   },
 
   hero: {
@@ -37,7 +52,6 @@ export const content = {
     /** VERIFIED: «Первая тренировка бесплатно» */
     cta: 'Первая тренировка — бесплатно',
     ctaNote: 'Напишите «БОКС» в директ',
-    secondary: 'Смотреть тренировки',
     scrollHint: 'Листайте',
   },
 
@@ -186,11 +200,15 @@ export const content = {
     body: 'Напишите «БОКС» в директ. Тренер ответит, задаст пару вопросов про уровень и подберёт время.',
     /** VERIFIED: оба аккаунта и Threads взяты из профилей */
     links: [
-      { label: 'Написать в директ', href: 'https://www.instagram.com/zarechye_boxing_academy/', primary: true },
-      { label: 'Instagram зала', href: 'https://www.instagram.com/zarechye_boxing_academy/', handle: '@zarechye_boxing_academy' },
-      { label: 'Instagram тренера', href: 'https://www.instagram.com/aydamir_tlinov/', handle: '@aydamir_tlinov' },
-      { label: 'Threads', href: 'https://www.threads.com/@aydamir_tlinov', handle: '@aydamir_tlinov' },
+      { label: 'Написать в директ', href: IG_GYM, primary: true },
+      { label: 'Instagram зала', href: IG_GYM, handle: '@zarechye_boxing_academy' },
+      { label: 'Instagram тренера', href: IG_COACH, handle: '@aydamir_tlinov' },
+      { label: 'Threads', href: THREADS_COACH, handle: '@aydamir_tlinov' },
     ],
+    /** Прямые адреса для кнопок вне списка контактов — см. комментарий
+     *  у констант вверху файла. */
+    directHref: IG_GYM,
+    coachHref: IG_COACH,
     /** TODO: адрес и телефон. Блок выключен до получения данных. */
     place: {
       enabled: false,

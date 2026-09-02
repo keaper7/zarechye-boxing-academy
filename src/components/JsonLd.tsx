@@ -6,7 +6,7 @@ import { SITE_URL, content } from '@/content'
  * `address` в schema.org хуже отсутствующего: он попадёт в карточку выдачи.
  */
 export function JsonLd() {
-  const { brand, coach, contact, meta } = content
+  const { brand, coach, contact, faq, meta } = content
   const sameAs = contact.links.filter((l) => !('primary' in l && l.primary)).map((l) => l.href)
 
   const graph = {
@@ -32,7 +32,20 @@ export function JsonLd() {
         jobTitle: 'Тренер по боксу',
         award: [...coach.awards],
         worksFor: { '@id': `${SITE_URL}/#gym` },
-        sameAs: ['https://www.instagram.com/aydamir_tlinov/', 'https://www.threads.com/@aydamir_tlinov'],
+        sameAs: [contact.coachHref, 'https://www.threads.com/@aydamir_tlinov'],
+      },
+      {
+        /* Те же шесть вопросов, что и в секции FAQ, — и это не дубль ради
+           поисковика, а его требование: размечать можно только те ответы,
+           которые посетитель видит на странице целиком. Массив здесь один
+           и тот же, так что разметка не может разойтись с текстом. */
+        '@type': 'FAQPage',
+        '@id': `${SITE_URL}/#faq`,
+        mainEntity: faq.items.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
       },
     ],
   }
