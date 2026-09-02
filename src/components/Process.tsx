@@ -77,7 +77,7 @@ function PinnedSteps() {
   return (
     <div
       ref={wrapRef}
-      className="relative mt-16"
+      className="relative mt-24"
       /* Высота = экран + ровно тот путь, который нужно проехать вбок.
          Фиксированные «42vh на шаг» давали 2900px прокрутки ради
          96px хода на широком мониторе — секция стояла на месте. */
@@ -126,7 +126,7 @@ function StackedSteps() {
 
   return (
     <>
-      <div className="shell mt-16">
+      <div className="shell mt-24">
         <div className="flex items-baseline gap-4 text-[var(--dim-2)]">
           <span className="mono">{content.process.stepsKicker}</span>
           <span className="h-px flex-1 bg-[var(--hair)] translate-y-[-4px]" />
