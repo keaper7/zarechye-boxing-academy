@@ -35,12 +35,16 @@ export function Hero() {
 
           Canvas слушает pointer-события, а не mouse — тап по мешку бьёт
           точно так же, как клик, так что подсказка нужна и на телефоне.
-          Только стрелка «прицеливания» на курсор там не имеет смысла:
-          на широких экранах текст стоит справа и стрелка указывает
-          на мешок, а на узких — просто центрирован над ним, без стрелки. */}
+          Только стрелка «прицеливания» на курсор там не имеет смысла, и
+          центр экрана — не центр мешка: pivotX в HeroCanvas вешает его
+          на 62% ширины, а не на 50%, так что текст по центру всей ширины
+          заходил под него. Слева, у того же отступа --pad, что и у
+          остального текста этого экрана, — там мешка нет ни на одной
+          ширине. На широких экранах раскладка не меняется: текст стоит
+          справа со стрелкой, указывающей на мешок. */}
       {!punched && (
         <span
-          className="fade-up mono pointer-events-none absolute inset-x-0 top-[28%] flex items-center justify-center gap-3 text-[var(--dim-2)] lg:inset-x-auto lg:right-[var(--pad)] lg:justify-start"
+          className="fade-up mono pointer-events-none absolute left-[var(--pad)] top-[28%] flex items-center gap-3 text-[var(--dim-2)] lg:inset-x-auto lg:right-[var(--pad)] lg:left-auto"
           style={at(2.6)}
           aria-hidden="true"
         >
