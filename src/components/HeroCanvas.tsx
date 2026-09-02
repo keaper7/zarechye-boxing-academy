@@ -45,6 +45,13 @@ const GRAVITY = 1400
 const DRAG = 0.9965
 const ITERATIONS = 6
 
+// Открытие сцены: груша не появляется уже готовой, а опускается на
+// цепи сверху и слегка раскачивается от собственного веса — вместо
+// отдельной шторки-прелоадера, которая стоит почти на каждом нашем
+// сайте и должна была бы повторяться и здесь.
+const INTRO_MS = 0.85
+const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3)
+
 type Node = { x: number; y: number; px: number; py: number; ax: number; ay: number; inv: number }
 
 type Scene = {
@@ -114,6 +121,18 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     let hovering = false
     let raf = 0
     let last = performance.now()
+
+    // Точка подвеса цепи во время физики — обычно равна S.pivotY, но
+    // на входной анимации едет снизу... то есть сверху вниз, от точки
+    // над кадром к настоящей. solve() крепит узел 0 сюда, а не к
+    // S.pivotY напрямую — иначе пришлось бы временно портить сам S,
+    // от которого зависят и градиент лампы, и пятно на полу.
+    let anchorY = 0
+    let builtOnce = false
+    let introActive = false
+    let introT = 0
+    let introFromY = 0
+    let introToY = 0
 
     const pointer = { x: -9999, y: -9999, active: false }
     const impacts: Impact[] = []
@@ -206,7 +225,30 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
         maxSwing: (chain + gap + bagH / 2) * Math.sin(0.5),
       }
 
-      rest(S, reduced ? 0.07 : 0.12)
+      // Первая сборка сцены на этом монтировании — груша едет с высоты;
+      // все последующие (например, ресайз окна) просто перекладывают
+      // верёвку в её обычный покой, как было всегда.
+      if (!builtOnce && !reduced) {
+        builtOnce = true
+        const trueY = S.pivotY
+        // На такую высоту, чтобы мешок с цепью целиком стоял выше
+        // кадра — иначе будет видно, как он «телепортируется» доверху.
+        const rise = S.armLen + Math.max(60, h * 0.1)
+        S.pivotY = trueY - rise
+        rest(S, 0.12)
+        S.pivotY = trueY
+
+        introFromY = trueY - rise
+        introToY = trueY
+        anchorY = introFromY
+        introT = 0
+        introActive = true
+      } else {
+        builtOnce = true
+        introActive = false
+        anchorY = S.pivotY
+        rest(S, reduced ? 0.07 : 0.12)
+      }
 
       // Цилиндрическая раскладка света: блик слева сверху, широкая
       // тень справа и слабый отсвет по правой кромке. Без него мешок
@@ -326,9 +368,11 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
         }
       }
 
-      // Подвес прибит намертво — накопленный дрейф ему не положен
+      // Подвес прибит намертво — накопленный дрейф ему не положен.
+      // По Y — не к s.pivotY напрямую, а к anchorY: во время входной
+      // анимации это разные точки (см. играющий сверху вниз intro).
       nodes[0].x = s.pivotX
-      nodes[0].y = s.pivotY
+      nodes[0].y = anchorY
 
       // Мягкий предел раскачки: дальше мешок не уходит, а остаток
       // скорости гасится, будто цепь дошла до упора
@@ -358,6 +402,20 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     }
 
     const step = (s: Scene, dt: number) => {
+      if (introActive) {
+        introT += dt
+        const p = Math.min(introT / INTRO_MS, 1)
+        anchorY = introFromY + (introToY - introFromY) * easeOutCubic(p)
+        if (p >= 1) {
+          introActive = false
+          anchorY = introToY
+          // Толчок в сторону в момент приземления: без него груша
+          // просто гасит вертикальную скорость об натянутую цепь и
+          // замирает — а раскачаться боком ей больше не от чего.
+          push(bagCenter(), (Math.random() < 0.5 ? 1 : -1) * 95, 0)
+        }
+      }
+
       time += dt
 
       acc += dt
@@ -752,6 +810,13 @@ export function HeroCanvas({ className, onPunch }: { className?: string; onPunch
     }
 
     const ro = new ResizeObserver(() => {
+      // ResizeObserver зовёт колбэк один раз сразу после observe(), даже
+      // если размер не менялся, — раньше это был второй build() почти
+      // синхронно с первым, и он мгновенно откатывал грушу из полёта
+      // обратно в состояние покоя, съедая всю входную анимацию. Реальный
+      // ресайз здесь отличим по факту изменения размеров холста.
+      const rect = canvas.getBoundingClientRect()
+      if (Math.abs(rect.width - w) < 1 && Math.abs(rect.height - h) < 1) return
       build()
       if (reduced && S) render(S)
     })

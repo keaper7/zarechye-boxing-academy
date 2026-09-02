@@ -69,11 +69,6 @@ body {
   border-radius: 2px;
 }
 
-/* Пока идёт прелоадер — страница под шторкой не должна скроллиться */
-body[data-locked='true'] {
-  overflow: hidden;
-}
-
 /* ── Типографика ──────────────────────────────────────────── */
 .display {
   font-family: var(--font-display);
@@ -207,13 +202,6 @@ body[data-locked='true'] {
   [data-reveal] {
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  /* Шторка прелоадера попадает и в серверную разметку, а снять её
-     умеет только скрипт. Без этого правила страница с отключённым
-     JS — сплошной тёмный прямоугольник во весь экран. */
-  [data-preloader] {
-    display: none !important;
   }
 }
 
