@@ -31,15 +31,20 @@ export function Hero() {
 
       {/* Интерактивный герой, о котором никто не догадался, — потраченная
           работа. Подсказка появляется с задержкой, чтобы не мешать входу
-          заголовка, и гаснет насовсем после первого удара. На узких
-          экранах её нет: там нет и курсора, которым можно «прицелиться». */}
+          заголовка, и гаснет насовсем после первого удара.
+
+          Canvas слушает pointer-события, а не mouse — тап по мешку бьёт
+          точно так же, как клик, так что подсказка нужна и на телефоне.
+          Только стрелка «прицеливания» на курсор там не имеет смысла:
+          на широких экранах текст стоит справа и стрелка указывает
+          на мешок, а на узких — просто центрирован над ним, без стрелки. */}
       {!punched && (
         <span
-          className="fade-up mono pointer-events-none absolute right-[var(--pad)] top-[28%] hidden items-center gap-3 text-[var(--dim-2)] lg:flex"
+          className="fade-up mono pointer-events-none absolute inset-x-0 top-[28%] flex items-center justify-center gap-3 text-[var(--dim-2)] lg:inset-x-auto lg:right-[var(--pad)] lg:justify-start"
           style={at(2.6)}
           aria-hidden="true"
         >
-          <span aria-hidden="true">←</span>
+          <span className="hidden lg:inline" aria-hidden="true">←</span>
           Ударьте по мешку
         </span>
       )}
