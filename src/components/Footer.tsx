@@ -12,6 +12,14 @@ export function Footer() {
         </span>
         <span className="mono text-[var(--dim-2)]">© {year}</span>
       </div>
+      {/* Стандартная подпись на всех сайтах SEVEN — та же формулировка
+          и ссылка, что на kingstudio.sevensites.ru и publico.sevensites.ru. */}
+      <p className="mono mt-4 text-[var(--dim-2)]">
+        Дизайн и разработка —{' '}
+        <a href="https://sevensites.ru" target="_blank" rel="noopener" className="link-underline text-bone">
+          SEVEN
+        </a>
+      </p>
     </footer>
   )
 }
