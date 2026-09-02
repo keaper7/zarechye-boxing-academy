@@ -86,7 +86,7 @@ export function Hero() {
 
           <div className="fade-up pointer-events-auto flex flex-col items-start gap-3" style={at(0.95)}>
             <MagneticButton
-              href={content.contact.links[0].href}
+              href={content.contact.directHref}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative inline-flex items-center gap-4 overflow-hidden border border-signal px-7 py-4"

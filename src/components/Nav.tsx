@@ -93,7 +93,7 @@ export function Nav() {
         </nav>
 
         <a
-          href={content.contact.links[0].href}
+          href={content.contact.directHref}
           target="_blank"
           rel="noopener noreferrer"
           className="mono border border-[var(--hair-strong)] px-4 py-2 text-bone transition-colors duration-300 hover:border-signal hover:bg-signal"

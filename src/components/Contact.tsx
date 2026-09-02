@@ -77,6 +77,19 @@ export function Contact() {
                   {contact.place.phone}
                 </a>
               ) : null}
+              {/* Раньше mapUrl лежал в content.ts, но нигде не выводился:
+                  клиент прислал бы ссылку на карту, а она не появилась бы
+                  на сайте. Теперь поле работает так же, как соседние. */}
+              {contact.place.mapUrl ? (
+                <a
+                  href={contact.place.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mono link-underline mt-3 inline-block text-[var(--dim-2)] transition-colors hover:text-bone"
+                >
+                  Показать на карте ↗
+                </a>
+              ) : null}
             </li>
           )}
         </ul>

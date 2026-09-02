@@ -21,7 +21,7 @@ export function Coach() {
           </Reveal>
           <Reveal delay={0.08}>
             <a
-              href={content.contact.links[2].href}
+              href={content.contact.coachHref}
               target="_blank"
               rel="noopener noreferrer"
               className="mono link-underline mt-6 inline-block text-[var(--dim-2)] transition-colors hover:text-bone"

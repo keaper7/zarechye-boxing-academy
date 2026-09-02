@@ -91,6 +91,10 @@ export function Preloader() {
 
   return (
     <motion.div
+      /* Снимается через CSS при (scripting: none) — см. globals.css.
+         Шторка попадает и в серверную разметку, а убрать её умеет только
+         скрипт: без этого страница без JS была бы пустым тёмным экраном. */
+      data-preloader=""
       className="fixed inset-0 z-[80] flex items-end justify-between bg-ink px-[var(--pad)] pb-[max(var(--pad),40px)]"
       initial={{ y: '0%' }}
       animate={{ y: lift ? '-101%' : '0%' }}
