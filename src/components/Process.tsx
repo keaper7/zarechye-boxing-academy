@@ -132,14 +132,23 @@ function StackedSteps() {
           <span className="h-px flex-1 bg-[var(--hair)] translate-y-[-4px]" />
         </div>
       </div>
-      <ol className="shell mt-8 grid gap-px bg-[var(--hair)] sm:grid-cols-2">
-      {steps.map((s, i) => (
-        <Reveal as="li" key={s.title} delay={0.06 * i} className="bg-ink px-[clamp(20px,3vw,40px)] py-[clamp(28px,4vw,48px)]">
-          <h3 className="display text-[clamp(28px,5vw,44px)]">{s.title}</h3>
-          <p className="body-text mt-4">{s.body}</p>
-        </Reveal>
-      ))}
-      </ol>
+      {/* gap-px + bg-[var(--hair)] рисует тонкие линии между карточками
+          через сетку, а не бордерами. Раньше эта заливка висела прямо на
+          <ol className="shell ...">, а «shell» добавляет padding-inline —
+          серый фон грида красился и под этим паддингом, и по бокам всего
+          блока на мобильном получались широкие серые рамки. Паддинг и
+          центрирование теперь на обёртке, у самого grid — только заливка
+          для линий, ей просто нечего красить за пределами карточек. */}
+      <div className="shell mt-8">
+        <ol className="grid gap-px bg-[var(--hair)] sm:grid-cols-2">
+        {steps.map((s, i) => (
+          <Reveal as="li" key={s.title} delay={0.06 * i} className="bg-ink px-[clamp(20px,3vw,40px)] py-[clamp(28px,4vw,48px)]">
+            <h3 className="display text-[clamp(28px,5vw,44px)]">{s.title}</h3>
+            <p className="body-text mt-4">{s.body}</p>
+          </Reveal>
+        ))}
+        </ol>
+      </div>
     </>
   )
 }
