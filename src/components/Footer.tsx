@@ -13,10 +13,18 @@ export function Footer() {
         <span className="mono text-[var(--dim-2)]">© {year}</span>
       </div>
       {/* Стандартная подпись на всех сайтах SEVEN — та же формулировка
-          и ссылка, что на kingstudio.sevensites.ru и publico.sevensites.ru. */}
+          и ссылка, что на kingstudio.sevensites.ru и publico.sevensites.ru.
+          Подчёркивание здесь постоянное, а не по ховеру (как у .link-underline
+          в остальном сайте): для футер-подписи это единственный способ
+          сообщить, что текст кликабелен, — с телефона ховера не бывает. */}
       <p className="mono mt-4 text-[var(--dim-2)]">
         Дизайн и разработка —{' '}
-        <a href="https://sevensites.ru" target="_blank" rel="noopener" className="link-underline text-bone">
+        <a
+          href="https://sevensites.ru"
+          target="_blank"
+          rel="noopener"
+          className="text-signal underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
+        >
           SEVEN
         </a>
       </p>
