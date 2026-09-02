@@ -23,7 +23,7 @@ export function Footer() {
           href="https://sevensites.ru"
           target="_blank"
           rel="noopener"
-          className="text-signal underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
+          className="text-bone underline decoration-1 underline-offset-4 transition-opacity hover:opacity-70"
         >
           SEVEN
         </a>
