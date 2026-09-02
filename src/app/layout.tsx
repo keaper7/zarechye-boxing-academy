@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { JetBrains_Mono, Manrope, Oswald } from 'next/font/google'
 import { SITE_URL, content } from '@/content'
-import { Preloader } from '@/components/Preloader'
 import { Nav } from '@/components/Nav'
 import { JsonLd } from '@/components/JsonLd'
 import { SmoothScroll } from '@/lib/SmoothScroll'
@@ -65,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru" className={`${oswald.variable} ${manrope.variable} ${mono.variable}`}>
       <head>
         {/* Страница всегда открывается сверху: браузер иначе вернёт человека
-            в середину лендинга — под шторку прелоадера. Скрипт стоит здесь,
+            в середину лендинга при обновлении вкладки. Скрипт стоит здесь,
             а не в компоненте: значение должно быть выставлено до первого кадра. */}
         <script
           dangerouslySetInnerHTML={{
@@ -79,7 +78,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href={`${SITE_URL}/apple-touch-icon`} />
       </head>
       <body>
-        <Preloader />
         <SmoothScroll />
         {/* Видна только с клавиатуры: первым Tab'ом можно перескочить
             шапку и уйти сразу в контент. */}
