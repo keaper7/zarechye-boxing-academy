@@ -111,7 +111,7 @@ export const content = {
      *  повтора здесь, до того как читатель туда долистает, кульминация
      *  в конце страницы теряет силу. Раздел просто заканчивается на
      *  claimNote — и это нормально. */
-    stepsKicker: 'Как это работает',
+    stepsKicker: 'Процесс',
     steps: [
       {
         title: 'Первая тренировка',
@@ -204,7 +204,7 @@ export const content = {
   nav: [
     { label: 'Тренер', href: '#coach' },
     { label: 'Направления', href: '#programs' },
-    { label: 'Как это работает', href: '#process' },
+    { label: 'Процесс', href: '#process' },
     { label: 'Вопросы', href: '#faq' },
   ],
 
