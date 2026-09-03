@@ -163,7 +163,7 @@ export const content = {
    *  Обе служебные строки считает scripts/gallery-entries.mjs. */
   gallery: {
     kicker: 'Зал',
-    title: 'Как это выглядит изнутри',
+    title: 'Место тренировок',
     /** TODO: видео тренировок заказчик обещал прислать отдельно. */
     items: [
       {

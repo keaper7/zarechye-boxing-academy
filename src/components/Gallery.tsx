@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { content } from '@/content'
 import { Reveal } from './Reveal'
@@ -27,7 +27,10 @@ type Item = (typeof content.gallery.items)[number]
  * а телефон качает полноразмерный файл. Свой srcset из двух заранее
  * подготовленных размеров честнее и втрое легче на мобильном.
  *
- * Сетка кликабельна и открывает то же фото крупно, с навигацией
+ * Лента едет вбок, а не лежит плиткой: восемь кадров подряд плиткой —
+ * это уже почти всё, что можно увидеть на первом экране секции, а зал
+ * должен разворачиваться постепенно, кадр за кадром, как при обходе.
+ * Клик по любому кадру открывает то же фото крупно, с навигацией
  * стрелками, — простой лайтбокс без внешних библиотек.
  */
 export function Gallery() {
@@ -38,28 +41,9 @@ export function Gallery() {
     <section id="gallery" className="section shell">
       <SectionHead kicker={gallery.kicker} title={gallery.title} />
 
-      <ul className="mt-14 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
-        {gallery.items.map((item, i) => (
-          <Reveal as="li" key={item.name} delay={0.05 * i}>
-            <button
-              type="button"
-              onClick={() => setOpenIndex(i)}
-              className="group relative block aspect-[3/4] w-full overflow-hidden bg-ink-2"
-              aria-label={`Открыть фото: ${item.alt}`}
-            >
-              <Photo
-                item={item}
-                sizes="(max-width: 768px) 50vw, 25vw"
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.06]"
-              />
-              <span
-                className="absolute inset-0 bg-ink opacity-0 transition-opacity duration-500 group-hover:opacity-10"
-                aria-hidden="true"
-              />
-            </button>
-          </Reveal>
-        ))}
-      </ul>
+      <Reveal>
+        <Filmstrip items={gallery.items} onOpen={setOpenIndex} />
+      </Reveal>
 
       {openIndex !== null && (
         <Lightbox
@@ -70,6 +54,113 @@ export function Gallery() {
         />
       )}
     </section>
+  )
+}
+
+/**
+ * Лента с горизонтальным скроллом и снапом по кадрам. Высота кадра
+ * привязана к высоте вьюпорта, а не к ширине колонки, — от этого лента
+ * выглядит так же на любой ширине экрана и не сплющивается в полоску
+ * на широком мониторе, как сплющилась бы плитка на 5–6 колонок.
+ */
+function Filmstrip({ items, onOpen }: { items: readonly Item[]; onOpen: (i: number) => void }) {
+  const trackRef = useRef<HTMLUListElement>(null)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  const updateEdges = () => {
+    const el = trackRef.current
+    if (!el) return
+    const max = el.scrollWidth - el.clientWidth
+    setAtStart(el.scrollLeft <= 4)
+    setAtEnd(el.scrollLeft >= max - 4)
+    setProgress(max > 0 ? el.scrollLeft / max : 0)
+  }
+
+  useEffect(() => {
+    updateEdges()
+    // Меняется число кадров, помещающихся в ленту, — пересчитать края.
+    const onResize = () => updateEdges()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = trackRef.current
+    const card = el?.querySelector('li')
+    if (!el || !card) return
+    el.scrollBy({ left: dir * (card.clientWidth + 12), behavior: 'smooth' })
+  }
+
+  return (
+    <div className="relative mt-14">
+      <ul
+        ref={trackRef}
+        onScroll={updateEdges}
+        className="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-1 sm:gap-4"
+      >
+        {items.map((item, i) => (
+          <li key={item.name} className="shrink-0 snap-start">
+            <button
+              type="button"
+              onClick={() => onOpen(i)}
+              className="group relative block aspect-[3/4] h-[52svh] max-h-[540px] min-h-[280px] overflow-hidden bg-ink-2"
+              aria-label={`Открыть фото: ${item.alt}`}
+            >
+              <Photo
+                item={item}
+                sizes="(max-width: 640px) 70vw, 420px"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.06]"
+              />
+              <span
+                className="absolute inset-0 bg-ink opacity-0 transition-opacity duration-500 group-hover:opacity-10"
+                aria-hidden="true"
+              />
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Тень по краям подсказывает, что лента едет дальше, ещё до того,
+          как за неё потянули, — без этого первый экран секции выглядел
+          бы как четыре законченных кадра, а не как начало ленты. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-ink to-transparent transition-opacity duration-300 sm:w-20 ${atStart ? 'opacity-0' : 'opacity-100'}`}
+      />
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-ink to-transparent transition-opacity duration-300 sm:w-20 ${atEnd ? 'opacity-0' : 'opacity-100'}`}
+      />
+
+      <div className="mt-6 flex items-center gap-6">
+        <div className="h-px flex-1 bg-[var(--hair)]">
+          <div className="h-px bg-signal transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+        </div>
+        {/* Стрелки — только там, где есть точный указатель и место для них;
+            на телефоне лента листается свайпом, кнопки там были бы лишним
+            элементом управления рядом с уже привычным жестом. */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <NavButton dir="left" onClick={() => scrollByCard(-1)} disabled={atStart} />
+          <NavButton dir="right" onClick={() => scrollByCard(1)} disabled={atEnd} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NavButton({ dir, onClick, disabled }: { dir: 'left' | 'right'; onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={dir === 'left' ? 'Прошлые фото' : 'Следующие фото'}
+      className="flex h-10 w-10 items-center justify-center border border-[var(--hair-strong)] text-bone transition-colors duration-300 disabled:opacity-30 enabled:hover:border-signal enabled:hover:bg-signal"
+    >
+      {dir === 'left' ? '←' : '→'}
+    </button>
   )
 }
 
