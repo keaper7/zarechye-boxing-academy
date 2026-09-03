@@ -12,7 +12,11 @@
  * Источники VERIFIED-полей:
  *   instagram.com/zarechye_boxing_academy — название, тренер, направления,
  *     «минус 5-10 кг за 2 месяца», «первая тренировка бесплатно», слово «БОКС» в директ;
- *   instagram.com/aydamir_tlinov — МС России, финалист ЧР-2018, pro record 1:0, Threads.
+ *   instagram.com/aydamir_tlinov — МС России, финалист ЧР-2018, pro record 1:0.
+ *
+ * Телефон и адрес — не из открытых источников, а от заказчика напрямую
+ * (Айдамир прислал их в переписке): такие поля не помечены VERIFIED,
+ * это отдельная категория «дано клиентом», а не «найдено и подтверждено».
  */
 
 // Адрес GitHub Pages: username.github.io/репозиторий — не в корне домена.
@@ -29,7 +33,13 @@ export const SITE_URL = 'https://keaper7.github.io/zarechye-boxing-academy'
  */
 const IG_GYM = 'https://www.instagram.com/zarechye_boxing_academy/'
 const IG_COACH = 'https://www.instagram.com/aydamir_tlinov/'
-const THREADS_COACH = 'https://www.threads.com/@aydamir_tlinov'
+
+// Адрес и телефон зала — от заказчика напрямую (Айдамир). Вынесены в
+// константы, чтобы номер не расходился между ссылкой tel:, WhatsApp
+// и картой, если его когда-нибудь поменяют.
+const PLACE_ADDRESS = 'Р.п. Заречье, ул. Лучистая, 1А'
+const PLACE_PHONE_DIGITS = '79184229077'
+const WHATSAPP_COACH = `https://wa.me/${PLACE_PHONE_DIGITS}`
 
 export const content = {
   brand: {
@@ -301,24 +311,35 @@ export const content = {
     kicker: 'Записаться',
     title: 'Первая тренировка бесплатно',
     body: 'Напишите «БОКС» в директ. Тренер ответит, задаст пару вопросов про уровень и подберёт время.',
-    /** VERIFIED: оба аккаунта и Threads взяты из профилей */
+    /** VERIFIED: оба Instagram-аккаунта — из профилей. WhatsApp — тот же
+     *  номер, что и в contact.place: Threads тут был вставлен только
+     *  потому, что его нашли в био тренера, а им никто не пользуется —
+     *  заказчик попросил заменить на канал, по которому реально пишут. */
     links: [
       { label: 'Написать в директ', href: IG_GYM, primary: true },
       { label: 'Instagram зала', href: IG_GYM, handle: '@zarechye_boxing_academy' },
       { label: 'Instagram тренера', href: IG_COACH, handle: '@aydamir_tlinov' },
-      { label: 'Threads', href: THREADS_COACH, handle: '@aydamir_tlinov' },
+      { label: 'WhatsApp', href: WHATSAPP_COACH, handle: '+7 918 422-90-77' },
     ],
     /** Прямые адреса для кнопок вне списка контактов — см. комментарий
      *  у констант вверху файла. */
     directHref: IG_GYM,
     coachHref: IG_COACH,
-    /** VERIFIED: адрес и телефон Айдамира получены от заказчика напрямую. */
+    /** Адрес и телефон — от заказчика напрямую, это личный номер Айдамира
+     *  (не общий номер зала), поэтому в Contact.tsx рядом с ним стоит
+     *  подпись с именем — иначе непонятно, кому звонишь. */
     place: {
       enabled: true,
       area: 'Заречье',
-      address: 'Р.п. Заречье, ул. Лучистая, 1А',
+      address: PLACE_ADDRESS,
       phone: '+7 918 422-90-77',
-      mapUrl: 'https://yandex.ru/maps/?text=' + encodeURIComponent('Р.п. Заречье, ул. Лучистая, 1А'),
+      mapUrl: 'https://yandex.ru/maps/?text=' + encodeURIComponent(PLACE_ADDRESS),
+      /* Встроенная миниатюра карты — «поисковый» виджет Яндекса без
+       * API-ключа: показывает точку по текстовому адресу, а не по
+       * точным координатам (их клиент не присылал). Как только появится
+       * подтверждённая точка на карте (см. TODO в README), сюда же
+       * можно будет подставить ll= и увеличить точность. */
+      mapEmbedUrl: 'https://yandex.ru/map-widget/v1/?z=16&text=' + encodeURIComponent(PLACE_ADDRESS),
     },
   },
 
