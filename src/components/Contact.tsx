@@ -66,34 +66,64 @@ export function Contact() {
             </Reveal>
           ))}
 
-          {/* Адрес и телефон появятся здесь, как только клиент их даст —
-              см. contact.place в content.ts. Выдумывать их нельзя. */}
+          {/* Адрес и телефон — от заказчика, см. contact.place в content.ts.
+              Это личный номер Айдамира, а не общий номер зала, поэтому
+              подписан его именем — иначе неясно, кому звонишь. Телефон
+              и «показать на карте» раньше были соседними inline-block без
+              явного зазора и слипались в одну строку — теперь это ряд
+              с фиксированным отступом. Встроенная карта — ниже, под всей
+              сеткой, см. комментарий там. */}
           {contact.place.enabled && (
             <li className="py-5">
-              <p className="mono text-[var(--dim-2)]">{contact.place.area}</p>
+              <p className="mono text-[var(--dim-2)]">
+                {contact.place.area} · {content.coach.name}
+              </p>
               {contact.place.address ? <p className="mt-2 text-bone">{contact.place.address}</p> : null}
-              {contact.place.phone ? (
-                <a href={`tel:${contact.place.phone.replace(/[^+\d]/g, '')}`} className="link-underline mt-2 inline-block text-bone">
-                  {contact.place.phone}
-                </a>
-              ) : null}
-              {/* Раньше mapUrl лежал в content.ts, но нигде не выводился:
-                  клиент прислал бы ссылку на карту, а она не появилась бы
-                  на сайте. Теперь поле работает так же, как соседние. */}
-              {contact.place.mapUrl ? (
-                <a
-                  href={contact.place.mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mono link-underline mt-3 inline-block text-[var(--dim-2)] transition-colors hover:text-bone"
-                >
-                  Показать на карте ↗
-                </a>
-              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {contact.place.phone ? (
+                  <a
+                    href={`tel:${contact.place.phone.replace(/[^+\d]/g, '')}`}
+                    className="link-underline text-bone"
+                  >
+                    {contact.place.phone}
+                  </a>
+                ) : null}
+                {contact.place.mapUrl ? (
+                  <a
+                    href={contact.place.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mono link-underline text-[var(--dim-2)] transition-colors hover:text-bone"
+                  >
+                    Показать на карте ↗
+                  </a>
+                ) : null}
+              </div>
             </li>
           )}
         </ul>
       </div>
+
+      {/* Карта — не внутри правой колонки: там она сделала бы список
+          контактов заметно выше блока с текстом слева (проверено —
+          на десктопе правая часть выходила на ~350px ниже левой), и
+          получилось бы ровно то перекошенное соотношение, которого
+          просили избежать. Здесь она на всю ширину, под сеткой, —
+          иллюстрация к обеим колонкам сразу, а не довесок к одной. */}
+      {contact.place.enabled && contact.place.mapEmbedUrl ? (
+        <Reveal delay={0.1}>
+          <div className="mt-10 overflow-hidden border border-[var(--hair-strong)]">
+            <iframe
+              src={contact.place.mapEmbedUrl}
+              title={`Карта: ${contact.place.address}`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-64 w-full sm:h-80"
+            />
+          </div>
+        </Reveal>
+      ) : null}
     </section>
   )
 }
