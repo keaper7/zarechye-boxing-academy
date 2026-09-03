@@ -134,28 +134,44 @@ function Filmstrip({ items, onOpen }: { items: readonly Item[]; onOpen: (i: numb
         className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-ink to-transparent transition-opacity duration-300 sm:w-20 ${atEnd ? 'opacity-0' : 'opacity-100'}`}
       />
 
-      <div className="mt-6 flex items-center gap-6">
-        <div className="h-px flex-1 bg-[var(--hair)]">
-          <div className="h-px bg-signal transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
-        </div>
-        {/* Стрелки — только там, где есть точный указатель и место для них;
-            на телефоне лента листается свайпом, кнопки там были бы лишним
-            элементом управления рядом с уже привычным жестом. */}
-        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+      {/* Стрелки раньше стояли под лентой в правом углу рядом с тонкой
+          линией прогресса — там их было легко не заметить: угол, мелкий
+          масштаб, вообще без визуального веса. Теперь они лежат прямо
+          на кадрах, по центру высоты ленты, — как в обычной карусели:
+          такую пару стрелок на фото замечаешь, даже не ища глазами
+          элементы управления. На телефоне их по-прежнему нет — там
+          лента листается свайпом, и стрелки поверх фото были бы лишним
+          пальцем в кадре. */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-2 sm:flex sm:px-4">
+        <div className="pointer-events-auto">
           <NavButton dir="left" onClick={() => scrollByCard(-1)} disabled={atStart} />
+        </div>
+        <div className="pointer-events-auto">
           <NavButton dir="right" onClick={() => scrollByCard(1)} disabled={atEnd} />
         </div>
+      </div>
+
+      {/* Раньше здесь была заполняющаяся линия прогресса — тонкая полоска
+          почти не читалась и не говорила ничего конкретного. Счётчик
+          «01 / 08» — тот же приём, что и в лайтбоксе ниже, только для
+          ленты целиком: понятно и сколько кадров всего, и где сейчас. */}
+      <div className="mt-6 flex items-center justify-center gap-4">
+        <span className="h-px w-10 bg-[var(--hair)] sm:w-16" aria-hidden="true" />
+        <span className="mono text-[var(--dim-2)]">
+          {String(Math.round(progress * (items.length - 1)) + 1).padStart(2, '0')} /{' '}
+          {String(items.length).padStart(2, '0')}
+        </span>
+        <span className="h-px w-10 bg-[var(--hair)] sm:w-16" aria-hidden="true" />
       </div>
     </div>
   )
 }
 
 /**
- * Раньше кнопка была прозрачным контуром на --hair-strong (12% белого) —
- * на тёмном фоне секции это читалось как еле заметная линия, а не как
- * кнопка. Теперь под ней заливка на тон светлее фона (та же --color-ink-2,
- * что у карточек лоадера) и тень — стрелка стоит отдельным объектом,
- * а не тонет в --color-ink позади ленты.
+ * Кнопка лежит прямо на фотографии — фон под ней меняется от кадра
+ * к кадру, поэтому заливка полупрозрачная с бэкдроп-блюром (читается
+ * на любом фото, а не только на тёмных) и собственная тень, чтобы
+ * не сливаться с краем кадра.
  */
 function NavButton({ dir, onClick, disabled }: { dir: 'left' | 'right'; onClick: () => void; disabled: boolean }) {
   return (
@@ -164,7 +180,7 @@ function NavButton({ dir, onClick, disabled }: { dir: 'left' | 'right'; onClick:
       onClick={onClick}
       disabled={disabled}
       aria-label={dir === 'left' ? 'Прошлые фото' : 'Следующие фото'}
-      className="flex h-12 w-12 items-center justify-center border border-[var(--hair-strong)] bg-ink-2 text-[19px] text-bone shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-colors duration-300 disabled:opacity-30 enabled:hover:border-signal enabled:hover:bg-signal"
+      className="flex h-12 w-12 items-center justify-center border border-[var(--hair-strong)] bg-ink/70 text-[19px] text-bone shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-colors duration-300 disabled:opacity-0 enabled:hover:border-signal enabled:hover:bg-signal"
     >
       {dir === 'left' ? '←' : '→'}
     </button>
