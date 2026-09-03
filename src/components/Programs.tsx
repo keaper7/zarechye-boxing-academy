@@ -26,13 +26,22 @@ export function Programs() {
               <p className="mt-4 text-[clamp(15px,1.1vw,18px)] leading-snug text-bone">{item.summary}</p>
               <p className="body-text mt-4 max-w-[38ch]">{item.body}</p>
 
-              <ul className="mt-auto flex flex-wrap gap-2 pt-6">
-                {item.tags.map((t) => (
-                  <li key={t} className="mono border border-[var(--hair)] px-3 py-1.5 text-[var(--dim-2)]">
-                    {t}
-                  </li>
-                ))}
-              </ul>
+              {/* Раньше здесь стоял ряд из трёх слов-тегов — по виду
+                  метки, а сравнить карточки между собой по ним было
+                  нельзя: у каждой карточки свой независимый набор слов.
+                  Одна метка формата — то, что действительно отличает
+                  «Персонально» от двух других карточек, — и «Индивидуальная»
+                  выделена акцентом: так разница видна сразу по всему ряду
+                  карточек, а не только из текста внутри одной из них. */}
+              <div className="mt-auto pt-6">
+                <span
+                  className={`mono inline-block border px-3 py-1.5 ${
+                    item.individual ? 'border-signal text-signal' : 'border-[var(--hair)] text-[var(--dim-2)]'
+                  }`}
+                >
+                  {item.format}
+                </span>
+              </div>
             </div>
           </Reveal>
         ))}
