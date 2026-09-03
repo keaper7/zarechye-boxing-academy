@@ -364,7 +364,6 @@ export const content = {
     /** Адрес — от заказчика напрямую. */
     place: {
       enabled: true,
-      area: 'Заречье',
       address: PLACE_ADDRESS,
       /* lat/lon — не для отображения на странице (встроенную карту
        * пробовали и убрали, см. комментарий в Contact.tsx), а для
