@@ -66,10 +66,14 @@ export function Contact() {
             </Reveal>
           ))}
 
-          {/* Адрес — от заказчика, см. contact.place в content.ts. Номер
-              телефона здесь больше не дублируется — он уже виден выше,
-              подписью к WhatsApp; строка с именем осталась: она про то,
-              чей это адрес, а не про то, чей это номер.
+          {/* Адрес — от заказчика, см. contact.place в content.ts. Строка
+              «Заречье · Айдамир Тлинов» над адресом раньше отдельно
+              называла место и имя — но «Заречье» уже есть в самом
+              адресе строкой ниже, получалось одно и то же дважды.
+              Убрали её и оформили строку адреса как остальные пункты
+              списка (та же <a> с flex justify-between): адрес — слева,
+              «Показать на карте» — справа, вместо отдельного мелкого
+              текста над адресом.
 
               Встроенную картинку карты (Static Maps API) пробовали и
               убрали: светлая карта поверх тёмного сайта смотрелась чужеродно,
@@ -79,25 +83,21 @@ export function Contact() {
               карточку дома — адрес, организации внутри, маршрут; координаты
               (contact.place.lat/lon) для неё уже проверены и точны, если
               когда-нибудь понадобится встроить карту иначе. */}
-          {contact.place.enabled && (
-            <li className="py-5">
-              <p className="mono text-[var(--dim-2)]">
-                {contact.place.area} · {content.coach.name}
-              </p>
-              {contact.place.address ? <p className="mt-2 text-bone">{contact.place.address}</p> : null}
-
-              {contact.place.mapUrl ? (
-                <a
-                  href={contact.place.mapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mono link-underline mt-3 inline-block text-[var(--dim-2)] transition-colors hover:text-bone"
-                >
+          {contact.place.enabled && contact.place.address && contact.place.mapUrl ? (
+            <Reveal as="li" delay={0.06 * rest.length}>
+              <a
+                href={contact.place.mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-baseline justify-between gap-6 py-5"
+              >
+                <span className="text-[clamp(16px,1.4vw,20px)] text-bone">{contact.place.address}</span>
+                <span className="mono text-[var(--dim-2)] transition-colors duration-300 group-hover:text-signal">
                   Показать на карте ↗
-                </a>
-              ) : null}
-            </li>
-          )}
+                </span>
+              </a>
+            </Reveal>
+          ) : null}
         </ul>
       </div>
     </section>
