@@ -22,7 +22,21 @@ export function JsonLd() {
         areaServed: brand.area,
         sport: 'Бокс',
         sameAs,
-        ...(contact.place.address ? { address: contact.place.address } : {}),
+        // PostalAddress, а не строкой: разобранный на поля адрес поисковик
+        // может показать в карточке и связать с картой, слитную строку —
+        // нет. Регион не указан намеренно: заказчик прислал адрес без него,
+        // а угадывать область по названию посёлка нельзя — «Заречье»
+        // в России не одно.
+        ...(contact.place.address
+          ? {
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'улица Лучистая, 1А',
+                addressLocality: 'рабочий посёлок Заречье',
+                addressCountry: 'RU',
+              },
+            }
+          : {}),
         ...(contact.place.phone ? { telephone: contact.place.phone } : {}),
       },
       {
