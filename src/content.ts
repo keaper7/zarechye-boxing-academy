@@ -146,6 +146,85 @@ export const content = {
     ],
   },
 
+  /** VERIFIED: фотографии зала — от заказчика напрямую, не из Instagram
+   *  и не сток. Сняты на телефон: 960×1280, свет люминесцентный. Перед
+   *  публикацией прогнаны через scripts/prepare-photos.mjs — лёгкий
+   *  контраст и небольшое приглушение цвета, чтобы кадры сели в тёмную
+   *  палитру сайта и не спорили с вёрсткой оранжево-синими матами.
+   *  Кадрирование не трогали: зал должен остаться похожим на себя.
+   *
+   *  У каждого кадра лежат два файла — public/gym/<name>-480.webp и
+   *  -960.webp. Это ручной srcset: на статическом экспорте next/image
+   *  не режет картинки на лету, и без второго размера телефон качал бы
+   *  все 1,6 МБ десктопной версии вместо 0,5 МБ.
+   *
+   *  `blur` — крошечная размытая заглушка того же кадра: пока фото
+   *  грузится, на его месте стоит пятно правильного цвета, а не дыра.
+   *  Обе служебные строки считает scripts/gallery-entries.mjs. */
+  gallery: {
+    kicker: 'Зал',
+    title: 'Как это выглядит изнутри',
+    /** TODO: видео тренировок заказчик обещал прислать отдельно. */
+    items: [
+      {
+        name: 'bags-row',
+        alt: 'Ряд боксёрских мешков на цепях вдоль ринга',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JYwC/OCP7VSCa9tbNs+jUAAD+5SWwHvzC3oGBXaBkWuQOzcLMVh6E+VpOHP0kG2zNd6dLDmBTtrX1ZlfK2aKewxN8hXQfMUAezwk/j31P+wACz5ybJ8hLd6GrtcqirqwppIeR0lERMnzsAAA=',
+      },
+      {
+        name: 'ring-front',
+        alt: 'Ринг академии, вид от матов',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRsIAAABXRUJQVlA4ILYAAABwBgCdASoQABUAPu1kqk4ppaQiMAgBMB2JbAB3A5ACuM/0A6gDgQPKO9hD9gP0A9oADXBA6pDPZ4WvVAAA/uwPRQNvMZUI3zlFcyELM88rjcTKMIzitsmn6H3o8VEYtkhH2gP+ApylyqWNytgBsg4fLHMouCyRtt2ht7dmFQTDnj/byaWpf1m+a6kYO/l5PGxPX7DgPJv6ltZWX0NbwpDs/0y+1NaQPS1k+b3NFADh+sTuAAAAAA==',
+      },
+      {
+        name: 'bags-ring',
+        alt: 'Мешки на цепях и ринг за ними',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JbAC7AB36jdi1YAHWRh/yQAD+5Qwyc53lWp+SqOaPNHje1rRKWuYfZSBH5pYHit6PWR70gqFYEb96LkUb74+UZCRmhr0q54OP4esoO9p2vPWjUk/TPCQHOAnSW9ODF8uhbP018YW356gAAAA=',
+      },
+      {
+        name: 'ring-training',
+        alt: 'Ринг, на заднем плане идёт тренировка',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JaAATgAEm63zg+emoC7sYgAD+5GgKZP73dlIb5QXmegg512yy3giX4A21QcgpXqoA/8TopLulgs2Kjq7qmtiMETZMzLMJuZ/lZIxBfKHl4rSMVQCpeZLf3+dwniezEvFCb6jeTe4kuLS7a4L6VCn9gfBbniQAAAA=',
+      },
+      {
+        name: 'dummies',
+        alt: 'Манекены для отработки ударов',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAQBACdASoQABUAPu1iqU2ppaOiMAgBMB2JQBdgA79SK9zIdG3Tw608AAD+o3RvWhCnlQEHkhkZ1ke4QbiNn5RzR+9/ADmO/ueRRuvJDm10fb2dBMZIwm3MiH+Gz6ccTpR17GslEmEqXwxZZbLH2zzs58hR7sSgydsItwtbIcLPdmuS2SS+nM/l18pgAA==',
+      },
+      {
+        name: 'cardio',
+        alt: 'Кардиозона: воздушные велотренажёры и блочная рама',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRrAAAABXRUJQVlA4IKQAAAAwBACdASoQABUAPu1iqU2ppaOiMAgBMB2JQBYdsZAb+neP8jv+bFDXXDgA/h+694OpFtlCJAAs/m4k1JO63Ndrj/wpi1vv6nyRwfsfKV0HhnYHS2392QujlwPVIXspOjGpG5VazThbeUXU+f4z37GD/FI865K0QFa1t6jcb9l81r6covpjNoQ8izxkDPplDfeC537/wsYLWnH2VZqr8A5D6WiAAA==',
+      },
+      {
+        name: 'hall',
+        alt: 'Общий вид зала: маты, ринг и мешки',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAADwAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JQBdgBDtLcvVnwtsOKZQAAP7uhKlk32RWLRZp9Lxu2pVig4beFLpdxg7W85Bq3zFXM9xdNJiwE8jw7vfSG7iZ3nWhtPGWHis2mppZAiva+2XEgae1nhBujPQ/YLPMXBZAAA==',
+      },
+      {
+        name: 'strength',
+        alt: 'Силовая рама и тренажёры для общей подготовки',
+        width: 960,
+        height: 1280,
+        blur: 'data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAACwAwCdASoQABUAPu1iqU2ppaOiMAgBMB2JZQAAUrce1AWGo0xigAD+296cqfSC0A8Kkg1TBMYLiLvCOWxeUtp8v25TGJ0mXpkKIJBrGEXrYBaDL9+ZV5J/6PaugBjTUzxBKMbyjgu4BY97bjbyQNCcRppzziwA',
+      },
+    ],
+  },
+
   /** Строка-марка между секциями. Скорость привязана к скроллу. */
   marquee: ['Бокс', 'Техника', 'Дисциплина', 'Форма', 'Характер', 'Заречье'],
 
@@ -156,11 +235,35 @@ export const content = {
     items: [] as { title: string; price: string; note: string }[],
   },
 
-  /** TODO: расписания нет в открытых источниках. */
+  /** VERIFIED: расписание получено от заказчика (фото стенда в зале).
+   *  Названия групп — дословно с фото, с одним сознательным исключением:
+   *  «оздоровительная группа» на фото — по просьбе заказчика на сайте
+   *  так не называется, это группа для людей старшего возраста, и сайт
+   *  так и говорит, без канцелярского ярлыка. */
   schedule: {
-    enabled: false,
+    enabled: true,
     kicker: 'Расписание',
-    days: [] as { day: string; slots: string[] }[],
+    days: [
+      {
+        day: 'Понедельник, среда, пятница',
+        slots: [
+          { time: '17:30–18:30', group: 'Группа начальной подготовки' },
+          { time: '18:30–20:00', group: 'Основная группа' },
+          { time: '20:00–21:15', group: 'Для старшего возраста' },
+        ],
+      },
+      {
+        day: 'Вторник, четверг',
+        slots: [
+          { time: '18:00–19:30', group: 'Основная группа' },
+          { time: '20:00–21:15', group: 'Для старшего возраста' },
+        ],
+      },
+      {
+        day: 'Суббота',
+        slots: [{ time: '11:00–12:30', group: 'Основная группа' }],
+      },
+    ],
   },
 
   faq: {
@@ -209,19 +312,20 @@ export const content = {
      *  у констант вверху файла. */
     directHref: IG_GYM,
     coachHref: IG_COACH,
-    /** TODO: адрес и телефон. Блок выключен до получения данных. */
+    /** VERIFIED: адрес и телефон Айдамира получены от заказчика напрямую. */
     place: {
-      enabled: false,
+      enabled: true,
       area: 'Заречье',
-      address: null as string | null,
-      phone: null as string | null,
-      mapUrl: null as string | null,
+      address: 'Р.п. Заречье, ул. Лучистая, 1А',
+      phone: '+7 918 422-90-77',
+      mapUrl: 'https://yandex.ru/maps/?text=' + encodeURIComponent('Р.п. Заречье, ул. Лучистая, 1А'),
     },
   },
 
   nav: [
     { label: 'Тренер', href: '#coach' },
     { label: 'Направления', href: '#programs' },
+    { label: 'Зал', href: '#gallery' },
     { label: 'Процесс', href: '#process' },
     { label: 'Вопросы', href: '#faq' },
   ],
