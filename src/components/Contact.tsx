@@ -66,12 +66,11 @@ export function Contact() {
             </Reveal>
           ))}
 
-          {/* Адрес и телефон — от заказчика, см. contact.place в content.ts.
-              Это личный номер Айдамира, а не общий номер зала, поэтому
-              подписан его именем — иначе неясно, кому звонишь. Телефон
-              и «показать на карте» раньше были соседними inline-block без
-              явного зазора и слипались в одну строку — теперь это ряд
-              с фиксированным отступом.
+          {/* Адрес — от заказчика, см. contact.place в content.ts. Телефон
+              текстом на странице больше не выводится (решение заказчика) —
+              связь идёт через кнопки выше (директ, WhatsApp), а не по
+              видимому номеру. Строка с именем осталась: она про то, чей
+              это адрес, а не про то, чей это номер.
 
               Встроенную картинку карты (Static Maps API) пробовали и
               убрали: светлая карта поверх тёмного сайта смотрелась чужеродно,
@@ -88,26 +87,16 @@ export function Contact() {
               </p>
               {contact.place.address ? <p className="mt-2 text-bone">{contact.place.address}</p> : null}
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-                {contact.place.phone ? (
-                  <a
-                    href={`tel:${contact.place.phone.replace(/[^+\d]/g, '')}`}
-                    className="link-underline text-bone"
-                  >
-                    {contact.place.phone}
-                  </a>
-                ) : null}
-                {contact.place.mapUrl ? (
-                  <a
-                    href={contact.place.mapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mono link-underline text-[var(--dim-2)] transition-colors hover:text-bone"
-                  >
-                    Показать на карте ↗
-                  </a>
-                ) : null}
-              </div>
+              {contact.place.mapUrl ? (
+                <a
+                  href={contact.place.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mono link-underline mt-3 inline-block text-[var(--dim-2)] transition-colors hover:text-bone"
+                >
+                  Показать на карте ↗
+                </a>
+              ) : null}
             </li>
           )}
         </ul>
