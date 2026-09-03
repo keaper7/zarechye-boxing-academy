@@ -141,7 +141,7 @@ function Filmstrip({ items, onOpen }: { items: readonly Item[]; onOpen: (i: numb
         {/* Стрелки — только там, где есть точный указатель и место для них;
             на телефоне лента листается свайпом, кнопки там были бы лишним
             элементом управления рядом с уже привычным жестом. */}
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
           <NavButton dir="left" onClick={() => scrollByCard(-1)} disabled={atStart} />
           <NavButton dir="right" onClick={() => scrollByCard(1)} disabled={atEnd} />
         </div>
@@ -150,6 +150,13 @@ function Filmstrip({ items, onOpen }: { items: readonly Item[]; onOpen: (i: numb
   )
 }
 
+/**
+ * Раньше кнопка была прозрачным контуром на --hair-strong (12% белого) —
+ * на тёмном фоне секции это читалось как еле заметная линия, а не как
+ * кнопка. Теперь под ней заливка на тон светлее фона (та же --color-ink-2,
+ * что у карточек лоадера) и тень — стрелка стоит отдельным объектом,
+ * а не тонет в --color-ink позади ленты.
+ */
 function NavButton({ dir, onClick, disabled }: { dir: 'left' | 'right'; onClick: () => void; disabled: boolean }) {
   return (
     <button
@@ -157,7 +164,7 @@ function NavButton({ dir, onClick, disabled }: { dir: 'left' | 'right'; onClick:
       onClick={onClick}
       disabled={disabled}
       aria-label={dir === 'left' ? 'Прошлые фото' : 'Следующие фото'}
-      className="flex h-10 w-10 items-center justify-center border border-[var(--hair-strong)] text-bone transition-colors duration-300 disabled:opacity-30 enabled:hover:border-signal enabled:hover:bg-signal"
+      className="flex h-12 w-12 items-center justify-center border border-[var(--hair-strong)] bg-ink-2 text-[19px] text-bone shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-colors duration-300 disabled:opacity-30 enabled:hover:border-signal enabled:hover:bg-signal"
     >
       {dir === 'left' ? '←' : '→'}
     </button>

@@ -41,6 +41,16 @@ const PLACE_ADDRESS = 'Р.п. Заречье, ул. Лучистая, 1А'
 const PLACE_PHONE_DIGITS = '79184229077'
 const WHATSAPP_COACH = `https://wa.me/${PLACE_PHONE_DIGITS}`
 
+/**
+ * Координаты дома проверены вручную поиском по адресу на Яндекс Картах:
+ * тот же дом 1А на ул. Лучистая в п.г.т. Заречье (Одинцовский г.о.,
+ * Московская область), внутри — «Москоу Джиу Джитсу» и «Мастер спорта»,
+ * то есть тот самый многопрофильный спортивный дом, где зал Айдамира.
+ * Долгота, широта — в этом порядке их принимают параметры ll/pt.
+ */
+const PLACE_LON = 37.390577
+const PLACE_LAT = 55.677722
+
 export const content = {
   brand: {
     /** VERIFIED: ник аккаунта zarechye_boxing_academy */
@@ -333,13 +343,17 @@ export const content = {
       area: 'Заречье',
       address: PLACE_ADDRESS,
       phone: '+7 918 422-90-77',
-      mapUrl: 'https://yandex.ru/maps/?text=' + encodeURIComponent(PLACE_ADDRESS),
-      /* Встроенная миниатюра карты — «поисковый» виджет Яндекса без
-       * API-ключа: показывает точку по текстовому адресу, а не по
-       * точным координатам (их клиент не присылал). Как только появится
-       * подтверждённая точка на карте (см. TODO в README), сюда же
-       * можно будет подставить ll= и увеличить точность. */
-      mapEmbedUrl: 'https://yandex.ru/map-widget/v1/?z=16&text=' + encodeURIComponent(PLACE_ADDRESS),
+      lat: PLACE_LAT,
+      lon: PLACE_LON,
+      /* Ссылка «Показать на карте» — открывает настоящие Яндекс Карты,
+       * там сам сервис ведёт себя штатно. */
+      mapUrl: `https://yandex.ru/maps/?ll=${PLACE_LON}%2C${PLACE_LAT}&z=17&pt=${PLACE_LON}%2C${PLACE_LAT}%2Cpm2rdm`,
+      /* Миниатюра на самой странице — картинка, а не встроенный виджет:
+       * у интерактивного map-widget/v1 метка всегда синяя, менять цвет
+       * через pt он не умеет (проверено на живом URL). А обычный Static
+       * Maps API красный маркер рисует как попросишь — и он же легче
+       * iframe: ни своего JS, ни собственной прокрутки внутри страницы. */
+      mapImageUrl: `https://static-maps.yandex.ru/1.x/?ll=${PLACE_LON}%2C${PLACE_LAT}&z=17&l=map&size=650%2C450&pt=${PLACE_LON}%2C${PLACE_LAT}%2Cpm2rdm`,
     },
   },
 

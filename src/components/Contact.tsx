@@ -110,18 +110,32 @@ export function Contact() {
           на десктопе правая часть выходила на ~350px ниже левой), и
           получилось бы ровно то перекошенное соотношение, которого
           просили избежать. Здесь она на всю ширину, под сеткой, —
-          иллюстрация к обеим колонкам сразу, а не довесок к одной. */}
-      {contact.place.enabled && contact.place.mapEmbedUrl ? (
+          иллюстрация к обеим колонкам сразу, а не довесок к одной.
+
+          Картинка, а не iframe: интерактивный map-widget/v1 всегда
+          рисует метку синей и цвет через pt не берёт (проверено на живом
+          URL) — а Static Maps API красный маркер по тем же координатам
+          рисует честно, и он же не тянет за собой чужой JS и скролл
+          внутри страницы. Кадр без ключа API отдаёт максимум 650×450 —
+          дальше этой ширины сетку зерна на картинке становится видно,
+          поэтому контейнер ограничен по ширине, а не растянут на всю
+          колонку. Вся картинка — ссылка на настоящие Яндекс Карты. */}
+      {contact.place.enabled && contact.place.mapImageUrl ? (
         <Reveal delay={0.1}>
-          <div className="mt-10 overflow-hidden border border-[var(--hair-strong)]">
-            <iframe
-              src={contact.place.mapEmbedUrl}
-              title={`Карта: ${contact.place.address}`}
+          <a
+            href={contact.place.mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mx-auto mt-10 block max-w-[720px] overflow-hidden border border-[var(--hair-strong)] transition-colors duration-300 hover:border-signal"
+            aria-label={`Открыть карту: ${contact.place.address}`}
+          >
+            <img
+              src={contact.place.mapImageUrl}
+              alt={`Карта: ${contact.place.address}`}
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="h-64 w-full sm:h-80"
+              className="h-64 w-full object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.03] sm:h-80"
             />
-          </div>
+          </a>
         </Reveal>
       ) : null}
     </section>
