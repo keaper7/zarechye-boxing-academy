@@ -5,12 +5,18 @@
  *
  * Что делает и зачем:
  *
- * 1. Цветокоррекция. Снимки сделаны на телефон под люминесцентными
- *    лампами: света много, но картинка плоская и по цвету «дежурная».
- *    Лёгкий контраст плюс небольшое приглушение насыщенности сажают
- *    их в тёмную палитру сайта — иначе оранжево-синие маты кричат
- *    громче всей вёрстки. Правки намеренно слабые: зал должен
- *    остаться похожим на себя, это не рекламная ретушь.
+ * 1. Цветокоррекция — грейд «Тёплый вечер». Заказчик смотрел три
+ *    варианта на реальных кадрах (сравнение делали отдельным скриптом,
+ *    не сохранился в репозитории — был одноразовым) и выбрал этот.
+ *    Раньше здесь стояла только лёгкая коррекция контраста и насыщенности
+ *    (linear(1.14,-18) + modulate 0.86/0.98) — с ней снимки были честными,
+ *    но плоскими, «максимально обычными», как выразился заказчик.
+ *    Нынешний грейд сильнее: контраст глубже, лёгкий тёплый цвет в кадре
+ *    (будто зал освещён вечерним светом, а не люминесцентными лампами)
+ *    и виньетка по краям, которая тянет взгляд к центру кадра. Красные
+ *    канаты и перчатки от этого не блекнут, а становятся заметнее —
+ *    в отличие от первой пробы с sharp .tint(), которая перекрашивала
+ *    кадр целиком и съедала родные цвета зала.
  *
  * 2. Два размера. На статическом экспорте next/image не умеет резать
  *    картинки на лету (images.unoptimized), поэтому srcset собирается
@@ -52,15 +58,52 @@ const PICKS = [
   ['778fff73-e99a-431d-9c73-34af888afccc.JPG', 'strength'],
 ]
 
+/** Тёплый оверлей поверх кадра (soft-light, малая непрозрачность) —
+ *  не sharp .tint(): tint полностью переопределяет цвет по яркости
+ *  и на ярких акцентах (красные канаты, сине-оранжевые маты) съедает
+ *  их в один тон. Оверлей — это цветной свет в кадре, а не перекраска. */
+async function warmOverlay(buf) {
+  const img = sharp(buf)
+  const { width, height } = await img.metadata()
+  const rect = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <rect width="${width}" height="${height}" fill="#ff8a3d" fill-opacity="0.16"/>
+    </svg>`,
+  )
+  return img.composite([{ input: rect, blend: 'soft-light' }]).toBuffer()
+}
+
+/** Радиальная виньетка — затемнение к углам кадра, не к центру. */
+async function vignette(buf) {
+  const img = sharp(buf)
+  const { width, height } = await img.metadata()
+  const grad = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs>
+        <radialGradient id="v" cx="50%" cy="46%" r="75%">
+          <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0.4"/>
+        </radialGradient>
+      </defs>
+      <rect width="${width}" height="${height}" fill="url(#v)"/>
+    </svg>`,
+  )
+  return img.composite([{ input: grad, blend: 'multiply' }]).toBuffer()
+}
+
 /** Одна и та же обработка на все кадры — иначе галерея развалится
- *  на разные по тону картинки и перестанет читаться как один зал. */
-const graded = (file) =>
-  sharp(file)
-    // Телефон пишет поворот в EXIF, а не в пиксели: без rotate() часть
-    // кадров легла бы на бок.
-    .rotate()
-    .linear(1.14, -18)
-    .modulate({ saturation: 0.86, brightness: 0.98 })
+ *  на разные по тону картинки и перестанет читаться как один зал.
+ *  Возвращает буфер полного разрешения — resize делается отдельно
+ *  от него для каждого нужного размера, а не пересчитывает грейд
+ *  заново на каждый размер. */
+async function graded(file) {
+  // Телефон пишет поворот в EXIF, а не в пиксели: без rotate() часть
+  // кадров легла бы на бок.
+  let buf = await sharp(file).rotate().linear(1.3, -46).modulate({ saturation: 0.92, brightness: 0.94 }).toBuffer()
+  buf = await warmOverlay(buf)
+  buf = await vignette(buf)
+  return buf
+}
 
 await fs.mkdir(OUT, { recursive: true })
 
@@ -69,21 +112,22 @@ const manifest = []
 for (const [src, name] of PICKS) {
   const file = path.join(SRC, src)
   const meta = await sharp(file).rotate().metadata()
+  const full = await graded(file)
 
   for (const width of [480, 960]) {
-    await graded(file)
+    await sharp(full)
       .resize({ width, withoutEnlargement: true })
       .sharpen({ sigma: 0.7 })
       .webp({ quality: width === 480 ? 78 : 82 })
       .toFile(path.join(OUT, `${name}-${width}.webp`))
   }
 
-  const blur = await graded(file).resize({ width: 16 }).webp({ quality: 40 }).toBuffer()
+  const blur = await sharp(full).resize({ width: 16 }).webp({ quality: 40 }).toBuffer()
 
-  const full = await fs.stat(path.join(OUT, `${name}-960.webp`))
-  manifest.push({ name, width: meta.width, height: meta.height, kb: Math.round(full.size / 1024) })
+  const stat = await fs.stat(path.join(OUT, `${name}-960.webp`))
+  manifest.push({ name, width: meta.width, height: meta.height, kb: Math.round(stat.size / 1024) })
 
-  console.log(`${name.padEnd(14)} ${meta.width}×${meta.height}  ${Math.round(full.size / 1024)} КБ`)
+  console.log(`${name.padEnd(14)} ${meta.width}×${meta.height}  ${Math.round(stat.size / 1024)} КБ`)
   console.log(`  blur: data:image/webp;base64,${blur.toString('base64')}`)
 }
 
