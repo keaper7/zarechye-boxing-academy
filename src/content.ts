@@ -346,15 +346,21 @@ export const content = {
      *  показан текстом (handle) — это единственное место на сайте, где
      *  он теперь виден: раньше он дублировался ещё и рядом с адресом,
      *  убрали именно повтор, а не номер целиком. */
+    /** «Записаться» и «Написать в директ» ведут на личный профиль Айдамира
+     *  (IG_COACH), а не на аккаунт зала (IG_GYM) — так просил заказчик:
+     *  все ссылки записи должны вести на личную страницу тренера. Профиль
+     *  зала (`Instagram зала` ниже) остаётся отдельным пунктом — это
+     *  справочная ссылка на сам аккаунт, а не канал записи. */
     links: [
-      { label: 'Написать в директ', href: IG_GYM, primary: true },
+      { label: 'Написать в директ', href: IG_COACH, primary: true },
       { label: 'Instagram зала', href: IG_GYM, handle: '@zarechye_boxing_academy' },
       { label: 'Instagram тренера', href: IG_COACH, handle: '@aydamir_tlinov' },
       { label: 'WhatsApp', href: WHATSAPP_COACH, handle: PLACE_PHONE },
     ],
     /** Прямые адреса для кнопок вне списка контактов — см. комментарий
-     *  у констант вверху файла. */
-    directHref: IG_GYM,
+     *  у констант вверху файла. directHref — это и есть «Записаться»
+     *  в шапке и в hero, поэтому он равен IG_COACH, а не IG_GYM. */
+    directHref: IG_COACH,
     coachHref: IG_COACH,
     /** Номер — для JSON-LD (contact.phone), тот же, что подписан
      *  у WhatsApp в links. Отдельного поля для отображения рядом
