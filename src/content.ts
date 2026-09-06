@@ -19,10 +19,11 @@
  * это отдельная категория «дано клиентом», а не «найдено и подтверждено».
  */
 
-// Адрес GitHub Pages: username.github.io/репозиторий — не в корне домена.
-// Купите домен на клиента — замените на него, заодно уберите basePath
-// в next.config.ts (он там ровно из-за этого подпути).
-export const SITE_URL = 'https://keaper7.github.io/zarechye-boxing-academy'
+// Свой домен клиента (см. public/CNAME и комментарий про basePath
+// в next.config.ts). Раньше здесь был адрес GitHub Pages
+// (keaper7.github.io/zarechye-boxing-academy) — использовался, пока
+// своего домена не было.
+export const SITE_URL = 'https://zarechye-boxing.ru'
 
 /**
  * Профили, на которые ссылается не только список контактов, но и кнопки
