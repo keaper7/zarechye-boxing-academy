@@ -88,8 +88,18 @@ export function Hero() {
           <span className="sr-only">{brand.nameRu}</span>
         </h1>
 
-        <div className="mt-[clamp(20px,3.4svh,40px)] flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-          <p className="lead fade-up max-w-[46ch] text-[var(--dim)]" style={at(0.8)}>
+        <div className="mt-[clamp(20px,3.4svh,40px)] flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-7">
+          {/* На телефоне это была `.lead` (17–23px, line-height 1.45) —
+              тот же класс, что и у второстепенных абзацев в Contact/Process.
+              Тут это не второстепенный текст, а единственная строка, которая
+              объясняет, что за зал, — а из-за узкой ширины экрана она ещё
+              и переносится на три строки. При этом кнопка ниже набрана
+              заглавными и в рамке, и на маленьком экране рядом с некрупным
+              приглушённым текстом она читалась крупнее и весомее, чем
+              главная мысль над ней. Здесь текст крупнее и плотнее по
+              строкам — тем же классом на десктопе, где он и так рядом
+              с кнопкой в один визуальный ряд, а не друг под другом. */}
+          <p className="fade-up max-w-[46ch] text-[clamp(19px,4.4vw,23px)] leading-[1.35] text-[var(--dim)] lg:text-[clamp(17px,1.55vw,23px)] lg:leading-[1.45]" style={at(0.8)}>
             {hero.lead}
           </p>
 
@@ -98,7 +108,7 @@ export function Hero() {
               href={content.contact.directHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative inline-flex items-center gap-4 overflow-hidden border border-signal px-7 py-4"
+              className="group relative inline-flex items-center gap-4 overflow-hidden border border-signal px-6 py-3.5 lg:px-7 lg:py-4"
             >
               <span className="absolute inset-0 -translate-x-full bg-signal transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:translate-x-0" />
               <span className="mono relative text-bone">{hero.cta}</span>
