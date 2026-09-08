@@ -41,17 +41,55 @@ export function Coach() {
       </div>
 
       {/* Регалии вынесены под сетку во всю ширину: в правой колонке они
-          прижимались к низу портрета и оставляли посреди секции дыру. */}
+          прижимались к низу портрета и оставляли посреди секции дыру.
+
+          Раньше под каждой цифрой была одна короткая строка, и три
+          колонки на sm (640px) хватало с запасом. Заказчик прислал
+          на каждую цифру уже целый абзац — «МС» вдобавок с цитатой
+          и ссылками на бои, — и втроём в ряд на планшетной ширине
+          это просто не читалось бы. Три колонки теперь только с lg
+          (1024px), а до того — одна колонка, стат под статом. */}
       <div className="mt-[clamp(48px,7vw,96px)]">
         <Reveal>
           <hr className="hair mb-10" />
         </Reveal>
-        <dl className="grid gap-10 sm:grid-cols-3">
+        <dl className="grid gap-x-10 gap-y-14 lg:grid-cols-3">
           {coach.stats.map((s, i) => (
             <Reveal key={s.value} delay={0.08 * i}>
               <div>
                 <dt className="display text-signal text-[clamp(44px,5.4vw,84px)]">{s.value}</dt>
-                <dd className="mt-3 max-w-[24ch] text-[14px] leading-snug text-[var(--dim)]">{s.label}</dd>
+                <dd className="mt-3 max-w-[38ch] text-[var(--dim)]">
+                  <p className="text-[15px] font-medium text-bone">{s.title}</p>
+                  {s.subtitle ? <p className="mt-1 text-[13px] text-[var(--dim-2)]">{s.subtitle}</p> : null}
+                  {/* Цитата — не .mono: тот класс держит верхний регистр
+                      и разрядку под короткие лейблы вроде ссылок ниже,
+                      а живую фразу «Бокс — это не просто спорт» с ними
+                      было бы неловко читать. Курсив и красная полоса
+                      слева — тот же акцентный приём, что и у цитаты
+                      в другом месте сайта. */}
+                  {s.quote ? (
+                    <p className="mt-5 border-l-2 border-signal pl-4 text-[16px] italic leading-snug text-bone">
+                      «{s.quote}»
+                    </p>
+                  ) : null}
+                  {s.body ? <p className="mt-5 text-[14px] leading-snug">{s.body}</p> : null}
+                  {s.links.length > 0 ? (
+                    <ul className="mt-5 space-y-2">
+                      {s.links.map((l) => (
+                        <li key={l.href}>
+                          <a
+                            href={l.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mono link-underline text-[12px] text-[var(--dim-2)] transition-colors hover:text-bone"
+                          >
+                            {l.label} ↗
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </dd>
               </div>
             </Reveal>
           ))}
