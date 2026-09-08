@@ -83,9 +83,13 @@ export const content = {
     /** VERIFIED: имя профиля @zarechye_boxing_academy */
     name: 'Айдамир Тлинов',
     handle: '@aydamir_tlinov',
-    /** VERIFIED: био @aydamir_tlinov, дословно */
+    /** «МС» — текст от заказчика (см. коммент у bio); «2018» и «1:0» —
+     *  VERIFIED, био @aydamir_tlinov, дословно. */
     stats: [
-      { value: 'МС', label: 'мастер спорта России по боксу' },
+      {
+        value: 'МС',
+        label: 'Мастер спорта России по боксу. Победитель и призёр международных и всероссийских турниров',
+      },
       { value: '2018', label: 'финалист чемпионата России' },
       { value: '1:0', label: 'профессиональный рекорд' },
     ],
