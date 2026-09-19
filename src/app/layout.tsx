@@ -48,6 +48,12 @@ export const metadata: Metadata = {
     description: content.meta.description,
   },
   robots: { index: true, follow: true },
+  // Подтверждение прав в Яндекс.Вебмастере — просто добавляет
+  // <meta name="yandex-verification" content="..."> в <head>, сам код
+  // ничего не проверяет, это делает Яндекс при нажатии «Проверить»
+  // в панели. Если подтверждение когда-нибудь потребуется снять —
+  // достаточно убрать эту строку.
+  verification: { yandex: '1f0261e305cbfed9' },
   // apple-touch-icon прописан вручную в <head> ниже, а не здесь: любое
   // явное поле `icons` в metadata подменяет собой ВСЮ автосгенерированную
   // коллекцию иконок — пропадает и он, и обычный favicon (icon.svg).
